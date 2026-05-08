@@ -391,7 +391,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--cream);min
 const SHEET_ID='1FrLu-ket-ZUIE5UPr8BkVuuvRMWtoJ3O283RIsosarg';
 
 /* gviz/tq endpoint is more reliable for fetching named sheet tabs than /export */
-const URL_MAIN=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+const MAIN_SHEET_NAME = 'Prediction LO';
+const URL_MAIN=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(MAIN_SHEET_NAME)}`;
 /* Try multiple possible sheet name variants in order */
 const SC_SHEET_NAMES=['Scorecard T20','scorecard t20','Scorecard%20T20','ScoreCard T20'];
 let SC_URL_INDEX=0;
