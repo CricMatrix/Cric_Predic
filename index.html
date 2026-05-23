@@ -503,7 +503,7 @@ function renderScorecard(pred, sc){
   const fixture=(pred[21]||[])[0]||'';
   const venue  =(pred[22]||[])[12]||'';
   const rr     =(pred[22]||[])[8]||'';
-  const result = cel(sc,34,10);   /* K35 = sc[34] = sheet row35 */
+  const result = cel(sc,34,12);   /* K35 = sc[34] = sheet row35 */
 
   $('mi-fixture').textContent = fixture||'Match';
   if(venue){$('mi-venue').textContent=venue;sh('mi-venue-row');}else{hd('mi-venue-row');}
