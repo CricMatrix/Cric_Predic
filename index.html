@@ -107,25 +107,34 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .pred-nm-wrap{flex:1;min-width:0}
 .pred-nm{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#212121;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pred-ts-sm{font-size:.7rem;color:#9e9e9e;font-family:'Barlow Condensed',sans-serif}
-.pred-tot{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#2e7d32;white-space:nowrap;text-align:right;line-height:1}
+.pred-tot{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#0c447c;white-space:nowrap;text-align:right;line-height:1}
 .pred-tot-lbl{font-size:.65rem;color:#9e9e9e;text-align:right;text-transform:uppercase;letter-spacing:.5px}
 .expand-btn{width:28px;height:28px;border-radius:50%;background:#f5f5f5;border:1px solid #e0e0e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem;color:#757575;transition:all .2s;font-weight:700;line-height:1}
-.pred-summary:hover .expand-btn{background:#e8eaf6;border-color:#c5cae9;color:#3f51b5}
-.pred-card.open .expand-btn{background:#1a237e;border-color:#1a237e;color:#fff;transform:rotate(45deg)}
+.pred-summary:hover .expand-btn{background:#e6f1fb;border-color:#85b7eb;color:#185fa5}
+.pred-card.open .expand-btn{background:#0c447c;border-color:#0c447c;color:#fff;transform:rotate(45deg)}
 .pred-details{display:none;border-top:1px solid #e0e0e0;padding:12px 16px 14px;background:#fafafa}
 .pred-card.open .pred-details{display:block}
-.pred-row{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0;gap:8px}
+.pred-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;gap:14px}
 .pred-row:last-child{border-bottom:none}
-.pred-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#9e9e9e;flex-shrink:0;min-width:86px}
-.pred-val{font-size:.85rem;color:#212121;flex:1;font-weight:500}
-.pred-val.winner{color:#2e7d32;font-weight:700}
-.pred-val.captain{color:#f9a825;font-weight:700}
-.pred-val.vc{color:#1565c0;font-weight:700}
-.pred-val.extra{color:#e65100}
-.pred-val.empty{color:rgba(0,0,0,.2);font-style:italic;font-size:.78rem}
-.pp{background:#e8f5e9;border:1px solid #c8e6c9;border-radius:4px;padding:2px 7px;font-family:'Barlow Condensed',sans-serif;font-size:.77rem;font-weight:700;color:#2e7d32;white-space:nowrap;flex-shrink:0;min-width:40px;text-align:right}
-.pp.z{background:#ffebee;border-color:#ffcdd2;color:#c62828}
-.pp.h{background:#fff8e1;border-color:#ffe082;color:#f57f17}
+.pred-row-info{flex:1;min-width:0}
+.pred-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#9e9e9e;display:block;margin-bottom:2px}
+.pred-val{font-size:.95rem;color:#212121;font-weight:500;display:block}
+.pred-val.winner{color:#185fa5;font-weight:600}
+.pred-val.captain{color:#0c447c;font-weight:600}
+.pred-val.vc{color:#185fa5;font-weight:600}
+.pred-val.extra{color:#e65100;font-size:.85rem}
+.pred-val.empty{color:rgba(0,0,0,.2);font-style:italic;font-size:.85rem}
+.pp{
+  font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:700;
+  padding:8px 0;border-radius:8px;min-width:54px;text-align:center;
+  flex-shrink:0;background:#e6f1fb;color:#185fa5;
+}
+.pp.t1{background:#e6f1fb;color:#185fa5;}
+.pp.t2{background:#b5d4f4;color:#0c447c;}
+.pp.t3{background:#85b7eb;color:#042c53;}
+.pp.t4{background:#378add;color:#fff;}
+.pp.t5{background:#0c447c;color:#fff;}
+.pp.z{background:#fcebeb;color:#a32d2d;}
 .pts-tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:75vh;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .pts-tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:.85rem;min-width:420px}
 .pts-tbl thead th{padding:9px 12px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#444;background:#f5f5f5;border-bottom:2px solid #d0d0d0;white-space:nowrap;position:sticky;top:0;z-index:2;}
@@ -555,7 +564,14 @@ const FIELDS=[
   {col:8,lbl:'Player 4',cls:''},{col:9,lbl:'Player 5',cls:''},
   {col:10,lbl:'Captain ★ 2×',cls:'captain'},{col:11,lbl:'V.Captain 1.5×',cls:'vc'},
 ];
-const ppCls=v=>v<=0?'z':v>=50?'h':'';
+const ppCls=v=>{
+  if(v<=0)return'z';
+  if(v<20)return't1';
+  if(v<50)return't2';
+  if(v<100)return't3';
+  if(v<200)return't4';
+  return't5';
+};
 function renderPredictions(predRows,all){
   const entries=predRows.map((pred,ri)=>{
     const ptsRow=all[ri+1+22]||[];
@@ -572,10 +588,10 @@ function renderPredictions(predRows,all){
     let det=FIELDS.map(f=>{
       const val=(pred[f.col]||'').trim();
       const pts=n0(ptsRow[f.col]);
-      return `<div class="pred-row"><span class="pred-lbl">${f.lbl}</span>${val?`<span class="pred-val ${f.cls}">${esc(val)}</span>`:`<span class="pred-val empty">—</span>`}<span class="pp ${ppCls(pts)}">${fmt(pts)} pts</span></div>`;
+      return `<div class="pred-row"><span class="pp ${ppCls(pts)}">${fmt(pts)}</span><div class="pred-row-info"><span class="pred-lbl">${f.lbl}</span>${val?`<span class="pred-val ${f.cls}">${esc(val)}</span>`:`<span class="pred-val empty">—</span>`}</div></div>`;
     }).join('');
     const eQ=(pred[12]||'').trim(),eA=(pred[13]||'').trim(),ePts=n0(ptsRow[12]);
-    if(eQ||eA)det+=`<div class="pred-row"><span class="pred-lbl">Extra Pred.</span><span class="pred-val extra">${esc(eQ+(eA?' → '+eA:''))}</span><span class="pp ${ppCls(ePts)}">${fmt(ePts)} pts</span></div>`;
+    if(eQ||eA)det+=`<div class="pred-row"><span class="pp ${ppCls(ePts)}">${fmt(ePts)}</span><div class="pred-row-info"><span class="pred-lbl">Extra Pred.</span><span class="pred-val extra">${esc(eQ+(eA?' → '+eA:''))}</span></div></div>`;
     const card=document.createElement('div');
     card.className='pred-card';card.style.animationDelay=(i*.04)+'s';
     card.innerHTML=`
