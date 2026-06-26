@@ -101,6 +101,13 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .live-tbl tr:last-child td{border-bottom:none}
 .live-sec-row td{background:#f5f5f5;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:4px 10px;text-align:left!important;color:#757575!important;}
 .live-partnership td{color:#e65100!important;font-style:italic;font-size:.78rem;text-align:left!important;padding:5px 10px;}
+.search-bar{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:9px 14px;margin-bottom:10px;}
+.search-bar svg{color:#9e9e9e;flex-shrink:0;}
+.search-bar input{border:none;outline:none;flex:1;font-family:'Barlow',sans-serif;font-size:.88rem;background:transparent;color:#212121;}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;}
+.chip{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:600;padding:7px 14px;border-radius:20px;white-space:nowrap;border:1px solid #e0e0e0;color:#757575;background:#fff;flex-shrink:0;cursor:pointer;transition:all .15s;}
+.chip:hover{border-color:#85b7eb;}
+.chip.active{background:#0c447c;color:#fff;border-color:#0c447c;}
 .pred-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .pred-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;animation:fu .35s ease both;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 @keyframes fu{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -245,6 +252,16 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   <div class="tab-panel" id="tab-pred">
     <div id="pred-ld" class="status"><div class="spin"></div><h3>Loading Predictions…</h3></div>
     <div id="pred-main" style="display:none">
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="predSearch" placeholder="Search player…" oninput="filterPredictions()"/>
+      </div>
+      <div class="filter-row" id="predFilters">
+        <div class="chip active" data-filter="all" onclick="setFilter('all',this)">All</div>
+        <div class="chip" data-filter="winners" onclick="setFilter('winners',this)">Winners only</div>
+        <div class="chip" data-filter="highest" onclick="setFilter('highest',this)">Sort: Highest</div>
+        <div class="chip" data-filter="newest" onclick="setFilter('newest',this)">Sort: Newest</div>
+      </div>
       <div class="sh"><span class="sh-t">Predictions</span><span class="sh-b" id="pred-cnt"></span></div>
       <div class="pred-list" id="pred-list"></div>
     </div>
@@ -381,7 +398,7 @@ function renderScorecard(pred,sc){
   const fixture=(pred[21]||[])[0]||'';
   const venue  =(pred[22]||[])[12]||'';
   const rr     =(pred[22]||[])[8]||'';
-  const result =cel(sc,3,85);
+  const result =cel(sc,34,12);
   $('mi-fixture').textContent=fixture||'Match';
   if(venue){$('mi-venue').textContent=venue;sh('mi-venue-row');}else{hd('mi-venue-row');}
   if(rr){$('mi-rr').textContent=rr;sh('mi-rr-row');}else{hd('mi-rr-row');}
@@ -389,8 +406,8 @@ function renderScorecard(pred,sc){
   if(result){miResult.textContent=result;miResult.style.display='block';}
   else{miResult.style.display='none';}
 
-  const i1team=cel(sc,1,85);   /* CH3 */
-const i2team=cel(sc,2,85);   /* CH4 */
+  const i1team=cel(sc,32,12);
+  const i2team=cel(sc,33,12);
   const t1=splitTeamScore(i1team);
   const t2=splitTeamScore(i2team);
 
@@ -592,6 +609,10 @@ const ppCls=v=>{
   if(v<200)return't4';
   return't5';
 };
+let allPredEntries=[];
+let predWinnerCount=0;
+let predActiveFilter='all';
+
 function renderPredictions(predRows,all){
   const entries=predRows.map((pred,ri)=>{
     const ptsRow=all[ri+1+22]||[];
@@ -600,37 +621,74 @@ function renderPredictions(predRows,all){
     const totalPts=FIELDS.reduce((a,f)=>a+n0(ptsRow[f.col]),0)+n0(ptsRow[12]);
     return{pred,ptsRow,name,totalPts};
   }).filter(Boolean).sort((a,b)=>b.totalPts-a.totalPts);
-  const winnerCount=Math.floor(entries.length/2);
-  const list=$('pred-list');list.innerHTML='';
-  entries.forEach((e,i)=>{
-    const rank=i+1;
-    const {pred,ptsRow,name,totalPts}=e;
-    let det=FIELDS.map(f=>{
-      const val=(pred[f.col]||'').trim();
-      const pts=n0(ptsRow[f.col]);
-      return `<div class="pred-row"><span class="pp ${ppCls(pts)}">${fmt(pts)}</span><div class="pred-row-info"><span class="pred-lbl">${f.lbl}</span>${val?`<span class="pred-val ${f.cls}">${esc(val)}</span>`:`<span class="pred-val empty">—</span>`}</div></div>`;
-    }).join('');
-    const eQ=(pred[12]||'').trim(),eA=(pred[13]||'').trim(),ePts=n0(ptsRow[12]);
-    if(eQ||eA)det+=`<div class="pred-row"><span class="pp ${ppCls(ePts)}">${fmt(ePts)}</span><div class="pred-row-info"><span class="pred-lbl">Extra Pred.</span><span class="pred-val extra">${esc(eQ+(eA?' → '+eA:''))}</span></div></div>`;
-    const card=document.createElement('div');
-    card.className='pred-card';card.style.animationDelay=(i*.04)+'s';
-    card.innerHTML=`
-      <div class="pred-summary" onclick="toggleCard(this.closest('.pred-card'))">
-        <div class="pred-rank">${rank<=winnerCount?'🏆':rank}</div>
-        <div class="pred-avt ${rank===1?'r1-avt':''}">${esc(initials(name))}</div>
-        <div class="pred-nm-wrap">
-          <div class="pred-nm">${esc(name)}</div>
-          <div class="pred-ts-sm">${fmtDate(pred[0])}</div>
-        </div>
-        <div><div class="pred-tot">${fmt(totalPts)}</div><div class="pred-tot-lbl">pts</div></div>
-        <div class="expand-btn">+</div>
-      </div>
-      <div class="pred-details">${det}</div>`;
-    list.appendChild(card);
-  });
-  $('pred-cnt').textContent=entries.length+' players';
+
+  allPredEntries=entries;
+  predWinnerCount=Math.floor(entries.length/2);
+  predActiveFilter='all';
+  const search=$('predSearch');if(search)search.value='';
+  document.querySelectorAll('#predFilters .chip').forEach(c=>c.classList.remove('active'));
+  const allChip=document.querySelector('#predFilters .chip[data-filter="all"]');
+  if(allChip)allChip.classList.add('active');
+
+  applyPredictionsFilter();
   hd('pred-ld');sh('pred-main');hd('pred-err');
 }
+
+function buildPredCard(e,displayRank,isWinner,idx){
+  const {pred,ptsRow,name,totalPts}=e;
+  let det=FIELDS.map(f=>{
+    const val=(pred[f.col]||'').trim();
+    const pts=n0(ptsRow[f.col]);
+    return `<div class="pred-row"><span class="pp ${ppCls(pts)}">${fmt(pts)}</span><div class="pred-row-info"><span class="pred-lbl">${f.lbl}</span>${val?`<span class="pred-val ${f.cls}">${esc(val)}</span>`:`<span class="pred-val empty">—</span>`}</div></div>`;
+  }).join('');
+  const eQ=(pred[12]||'').trim(),eA=(pred[13]||'').trim(),ePts=n0(ptsRow[12]);
+  if(eQ||eA)det+=`<div class="pred-row"><span class="pp ${ppCls(ePts)}">${fmt(ePts)}</span><div class="pred-row-info"><span class="pred-lbl">Extra Pred.</span><span class="pred-val extra">${esc(eQ+(eA?' → '+eA:''))}</span></div></div>`;
+  const card=document.createElement('div');
+  card.className='pred-card';card.style.animationDelay=(idx*.04)+'s';
+  card.innerHTML=`
+    <div class="pred-summary" onclick="toggleCard(this.closest('.pred-card'))">
+      <div class="pred-rank">${isWinner?'🏆':displayRank}</div>
+      <div class="pred-nm-wrap">
+        <div class="pred-nm">${esc(name)}</div>
+        <div class="pred-ts-sm">${fmtDate(pred[0])}</div>
+      </div>
+      <div><div class="pred-tot">${fmt(totalPts)}</div><div class="pred-tot-lbl">pts</div></div>
+      <div class="expand-btn">+</div>
+    </div>
+    <div class="pred-details">${det}</div>`;
+  return card;
+}
+
+function setFilter(name,el){
+  predActiveFilter=name;
+  document.querySelectorAll('#predFilters .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  applyPredictionsFilter();
+}
+
+function filterPredictions(){applyPredictionsFilter();}
+
+function applyPredictionsFilter(){
+  const q=(($('predSearch')||{}).value||'').trim().toLowerCase();
+  let rows=allPredEntries.map((e,i)=>({...e,origRank:i+1,isWinner:(i+1)<=predWinnerCount}));
+
+  if(q) rows=rows.filter(r=>r.name.toLowerCase().includes(q));
+  if(predActiveFilter==='winners') rows=rows.filter(r=>r.isWinner);
+  if(predActiveFilter==='highest') rows=[...rows].sort((a,b)=>b.totalPts-a.totalPts);
+  if(predActiveFilter==='newest') rows=[...rows].sort((a,b)=>{
+    const da=new Date(a.pred[0]),db=new Date(b.pred[0]);
+    if(isNaN(da)||isNaN(db))return 0;
+    return db-da;
+  });
+
+  const list=$('pred-list');list.innerHTML='';
+  rows.forEach((r,i)=>{
+    const card=buildPredCard(r,r.origRank,r.isWinner,i);
+    list.appendChild(card);
+  });
+  $('pred-cnt').textContent=rows.length+' player'+(rows.length===1?'':'s');
+}
+
 function toggleCard(card){card.classList.toggle('open');}
 
 /* ── POINTS TABLE ── */
