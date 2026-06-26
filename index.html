@@ -42,22 +42,27 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .sh{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e0e0e0}
 .sh-t{font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:#1a237e}
 .sh-b{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:#757575;background:#f0f0f0;padding:2px 10px;border-radius:20px}
-.match-info-bar{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;flex-direction:column;gap:5px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.mi-fixture{font-family:'Barlow Condensed',sans-serif;font-size:.95rem;font-weight:700;color:#1a237e;letter-spacing:.5px;text-transform:uppercase;}
-.mi-row{font-family:'Barlow Condensed',sans-serif;font-size:.82rem;color:#555;display:flex;align-items:center;gap:5px;}
-.mi-row svg{flex-shrink:0;opacity:.6}
-.mi-result{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;color:#2e7d32;margin-top:6px;padding-top:6px;border-top:1px solid #e0e0e0;letter-spacing:.3px;}
-.innings-box{background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.inn-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;background:#f8f9fa;transition:background .15s;border-bottom:1px solid #e8e8e8;}
-.inn-header:hover{background:#f0f4ff}
-.inn-team{font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#1a237e;text-transform:uppercase;letter-spacing:.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.inn-team a{color:inherit;text-decoration:none;}
-.inn-team a:hover{text-decoration:underline;}
-.inn-score{font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#1a237e;white-space:nowrap;flex-shrink:0;margin-left:auto;margin-right:10px;letter-spacing:.5px;}
-.inn-toggle{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:#e8eaf6;border:1px solid #c5cae9;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#3f51b5;transition:all .25s;}
-.innings-box.open .inn-toggle{background:#1a237e;border-color:#1a237e;color:#fff;transform:rotate(45deg);}
-.inn-body{display:none;border-top:1px solid #e0e0e0}
-.innings-box.open .inn-body{display:block}
+/* ── HERO SCOREBOARD CARD ── */
+.hero-card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.08);margin-bottom:12px;}
+.hero-top{background:linear-gradient(135deg,#0c447c,#185fa5);padding:16px 18px;color:#fff;}
+.hero-fixture{font-family:'Oswald',sans-serif;font-size:.92rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;line-height:1.3;}
+.hero-meta-row{font-size:.78rem;opacity:.8;display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.hero-meta-row svg{flex-shrink:0;opacity:.85}
+.hero-result{background:rgba(255,255,255,.15);border-radius:8px;padding:8px 12px;margin-top:12px;font-size:.85rem;font-weight:600;text-align:center;}
+.hero-scores{display:flex;align-items:center;padding:18px;gap:8px;}
+.hero-team{flex:1;text-align:center;min-width:0;}
+.hero-team .nm{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hero-team .nm a{color:inherit;text-decoration:none;}
+.hero-team .nm a:hover{text-decoration:underline;}
+.hero-team .sc{font-family:'Oswald',sans-serif;font-size:1.3rem;font-weight:700;color:#0c447c;white-space:nowrap;}
+.hero-vs{width:32px;height:32px;border-radius:50%;background:#e6f1fb;color:#0c447c;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.hero-tabs{display:flex;border-top:1px solid #eee;}
+.hero-tab{flex:1;text-align:center;padding:11px;font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#9e9e9e;border-right:1px solid #eee;cursor:pointer;transition:all .15s;}
+.hero-tab:last-child{border-right:none;}
+.hero-tab.active{background:#e6f1fb;color:#0c447c;}
+.hero-tab:hover:not(.active){background:#fafafa;}
+.innings-panel{display:none;background:#fff;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.innings-panel.active{display:block;}
 .sc-section{padding:10px 12px 8px}
 .sc-sec-title{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1a237e;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #e8eaf6;}
 .sc-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px;border:1px solid #e8e8e8}
@@ -184,50 +189,47 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   <div class="tab-panel active" id="tab-sc">
     <div id="sc-ld" class="status"><div class="spin"></div><h3>Loading Scorecard…</h3><p>Fetching live data</p></div>
     <div id="sc-main" style="display:none">
-      <div class="match-info-bar">
-        <div class="mi-fixture" id="mi-fixture">—</div>
-        <div class="mi-row" id="mi-venue-row" style="display:none">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <span id="mi-venue">—</span>
-        </div>
-        <div class="mi-row" id="mi-rr-row" style="display:none">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span id="mi-rr">—</span>
-        </div>
-        <div class="mi-result" id="mi-result" style="display:none"></div>
-      </div>
-      <div class="innings-box" id="inn1">
-        <div class="inn-header" onclick="this.closest('.innings-box').classList.toggle('open')">
-          <span class="inn-team" id="inn1-team">—</span>
-          <span class="inn-score" id="inn1-score"></span>
-          <span class="inn-toggle">+</span>
-        </div>
-        <div class="inn-body">
-          <div class="sc-section">
-            <div class="sc-sec-title">🏏 Batting</div>
-            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bat"></table></div>
+      <div class="hero-card">
+        <div class="hero-top">
+          <div class="hero-fixture" id="mi-fixture">—</div>
+          <div class="hero-meta-row" id="mi-venue-row" style="display:none">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="mi-venue">—</span>
           </div>
-          <div class="sc-section">
-            <div class="sc-sec-title">⚾ Bowling</div>
-            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bowl"></table></div>
+          <div class="hero-meta-row" id="mi-rr-row" style="display:none">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span id="mi-rr">—</span>
           </div>
+          <div class="hero-result" id="mi-result" style="display:none"></div>
+        </div>
+        <div class="hero-scores">
+          <div class="hero-team"><div class="nm" id="score-t1-nm">—</div><div class="sc" id="score-t1-sc"></div></div>
+          <div class="hero-vs">VS</div>
+          <div class="hero-team"><div class="nm" id="score-t2-nm">—</div><div class="sc" id="score-t2-sc"></div></div>
+        </div>
+        <div class="hero-tabs">
+          <div class="hero-tab active" id="hero-tab1" onclick="switchInnings(1)">1st Innings</div>
+          <div class="hero-tab" id="hero-tab2" onclick="switchInnings(2)">2nd Innings</div>
         </div>
       </div>
-      <div class="innings-box" id="inn2">
-        <div class="inn-header" onclick="this.closest('.innings-box').classList.toggle('open')">
-          <span class="inn-team" id="inn2-team">—</span>
-          <span class="inn-score" id="inn2-score"></span>
-          <span class="inn-toggle">+</span>
+      <div class="innings-panel active" id="inn1">
+        <div class="sc-section">
+          <div class="sc-sec-title">🏏 Batting</div>
+          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bat"></table></div>
         </div>
-        <div class="inn-body">
-          <div class="sc-section">
-            <div class="sc-sec-title">🏏 Batting</div>
-            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bat"></table></div>
-          </div>
-          <div class="sc-section">
-            <div class="sc-sec-title">⚾ Bowling</div>
-            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bowl"></table></div>
-          </div>
+        <div class="sc-section">
+          <div class="sc-sec-title">⚾ Bowling</div>
+          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bowl"></table></div>
+        </div>
+      </div>
+      <div class="innings-panel" id="inn2">
+        <div class="sc-section">
+          <div class="sc-sec-title">🏏 Batting</div>
+          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bat"></table></div>
+        </div>
+        <div class="sc-section">
+          <div class="sc-sec-title">⚾ Bowling</div>
+          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bowl"></table></div>
         </div>
       </div>
       <div class="live-box" id="live-box" style="display:none">
@@ -332,6 +334,22 @@ function teamLink(name){
   return name?esc(name):'';
 }
 
+/* Splits merged "Team Name 255/4(20)" into {name, score} */
+function splitTeamScore(text){
+  if(!text) return {name:'',score:''};
+  const m=text.match(/^(.*?)\s*(\d+\/\d+\s*\([\d.]+\)|\d+\/\d+)\s*$/);
+  if(m) return {name:m[1].trim(), score:m[2].trim()};
+  return {name:text.trim(), score:''};
+}
+
+/* Tab switcher for 1st/2nd innings panels */
+function switchInnings(n){
+  document.getElementById('hero-tab1').classList.toggle('active', n===1);
+  document.getElementById('hero-tab2').classList.toggle('active', n===2);
+  document.getElementById('inn1').classList.toggle('active', n===1);
+  document.getElementById('inn2').classList.toggle('active', n===2);
+}
+
 /* ── LOAD ── */
 async function loadData(){
   const btn=$('rBtn');btn.disabled=true;btn.textContent='⟳ Loading…';
@@ -373,12 +391,14 @@ function renderScorecard(pred,sc){
 
   const i1team=cel(sc,32,12);
   const i2team=cel(sc,33,12);
+  const t1=splitTeamScore(i1team);
+  const t2=splitTeamScore(i2team);
 
-  /* Team names with links */
-  $('inn1-team').innerHTML=i1team?teamLink(i1team):'1st Innings';
-  $('inn1-score').style.display='none';
-  $('inn2-team').innerHTML=i2team?teamLink(i2team):'2nd Innings';
-  $('inn2-score').style.display='none';
+  /* Hero scoreboard — team names (linked) + scores */
+  $('score-t1-nm').innerHTML=t1.name?teamLink(t1.name):'Team 1';
+  $('score-t1-sc').textContent=t1.score||'';
+  $('score-t2-nm').innerHTML=t2.name?teamLink(t2.name):'Team 2';
+  $('score-t2-sc').textContent=t2.score||'';
 
   buildBatTable('inn1-bat', rng(sc,1,30,12,17));
   buildBatTable('inn2-bat', rng(sc,1,30,43,48));
@@ -591,7 +611,7 @@ function renderPredictions(predRows,all){
       return `<div class="pred-row"><span class="pp ${ppCls(pts)}">${fmt(pts)}</span><div class="pred-row-info"><span class="pred-lbl">${f.lbl}</span>${val?`<span class="pred-val ${f.cls}">${esc(val)}</span>`:`<span class="pred-val empty">—</span>`}</div></div>`;
     }).join('');
     const eQ=(pred[12]||'').trim(),eA=(pred[13]||'').trim(),ePts=n0(ptsRow[12]);
-    if(eQ||eA)det+=`<div class="pred-row"><span class="pp ${ppCls(ePts)}">${fmt(ePts)}</span><div class="pred-row-info"><span class="pred-lbl">Extraordinary Prediction (50 &amp; 100 points)</span><span class="pred-val extra">${esc(eQ)}${eA?` → <span style="color:#212121;font-weight:600">${esc(eA)}</span>`:''}</span></div></div>`;
+    if(eQ||eA)det+=`<div class="pred-row"><span class="pp ${ppCls(ePts)}">${fmt(ePts)}</span><div class="pred-row-info"><span class="pred-lbl">Extra Pred.</span><span class="pred-val extra">${esc(eQ+(eA?' → '+eA:''))}</span></div></div>`;
     const card=document.createElement('div');
     card.className='pred-card';card.style.animationDelay=(i*.04)+'s';
     card.innerHTML=`
