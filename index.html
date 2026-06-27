@@ -406,16 +406,16 @@ function renderScorecard(pred,sc){
   if(result){miResult.textContent=result;miResult.style.display='block';}
   else{miResult.style.display='none';}
 
-const i1team=cel(sc,1,85);   /* CH3 */
-const i2team=cel(sc,2,85);   /* CH4 */
-  const t1=splitTeamScore(i1team);
-  const t2=splitTeamScore(i2team);
+  const i1team =cel(sc,1,85);  /* CH3 */
+  const i1score=cel(sc,1,86);  /* CI3 */
+  const i2team =cel(sc,2,85);  /* CH4 */
+  const i2score=cel(sc,2,86);  /* CI4 */
 
   /* Hero scoreboard — team names (linked) + scores */
-  $('score-t1-nm').innerHTML=t1.name?teamLink(t1.name):'Team 1';
-  $('score-t1-sc').textContent=t1.score||'';
-  $('score-t2-nm').innerHTML=t2.name?teamLink(t2.name):'Team 2';
-  $('score-t2-sc').textContent=t2.score||'';
+  $('score-t1-nm').innerHTML=i1team?teamLink(i1team):'Team 1';
+  $('score-t1-sc').textContent=i1score||'';
+  $('score-t2-nm').innerHTML=i2team?teamLink(i2team):'Team 2';
+  $('score-t2-sc').textContent=i2score||'';
 
   buildBatTable('inn1-bat', rng(sc,1,30,12,17));
   buildBatTable('inn2-bat', rng(sc,1,30,43,48));
