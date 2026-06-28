@@ -833,7 +833,7 @@ function renderLeaderboard(rows){
     .map(r=>r.slice(0,lastCol+1).map(c=>(c||'').trim()))
     .filter(r=>r[0]);
 
-  const sorted=[...dataRows].sort((a,b)=>n0(b[1])-n0(a[1]));
+  const sorted=[...dataRows].sort((a,b)=>n0(b[3])-n0(a[3]));
 
   sorted.forEach((row,i)=>{
     const name=row[0],total=row[1]||'0',matches=row[2]||'0',avg=row[3]||'0';
