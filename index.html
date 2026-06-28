@@ -68,8 +68,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .sc-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px;border:1px solid #e8e8e8}
 .sc-tbl{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff}
 .sc-tbl thead tr{background:#f5f5f5;border-bottom:2px solid #e0e0e0}
-.sc-tbl thead th{padding:8px 10px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#555;white-space:nowrap;position:sticky;top:116px;z-index:90;background:#f5f5f5;}
-@media(max-width:600px){.sc-tbl thead th{top:100px;}}
+.sc-tbl thead th{padding:8px 10px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#555;white-space:nowrap;}
+/* Batting table only — bounded-height scroll box with its own sticky header (more reliable than page-level sticky) */
+.bat-scroll{max-height:460px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.bat-scroll thead th{position:sticky;top:0;z-index:5;background:#f5f5f5;box-shadow:0 1px 0 #e0e0e0;}
 .sc-tbl thead th:first-child{text-align:left}
 .sc-tbl tbody tr{border-bottom:1px solid #f0f0f0}
 .sc-tbl tbody tr:last-child{border-bottom:none}
@@ -248,7 +250,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="innings-panel active" id="inn1">
         <div class="sc-section">
           <div class="sc-sec-title">🏏 Batting</div>
-          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bat"></table></div>
+          <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn1-bat"></table></div>
         </div>
         <div class="sc-section">
           <div class="sc-sec-title">⚾ Bowling</div>
@@ -258,7 +260,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="innings-panel" id="inn2">
         <div class="sc-section">
           <div class="sc-sec-title">🏏 Batting</div>
-          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bat"></table></div>
+          <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn2-bat"></table></div>
         </div>
         <div class="sc-section">
           <div class="sc-sec-title">⚾ Bowling</div>
@@ -833,7 +835,7 @@ function renderLeaderboard(rows){
     .map(r=>r.slice(0,lastCol+1).map(c=>(c||'').trim()))
     .filter(r=>r[0]);
 
-  const sorted=[...dataRows].sort((a,b)=>n0(b[3])-n0(a[3]));
+  const sorted=[...dataRows].sort((a,b)=>n0(b[1])-n0(a[1]));
 
   sorted.forEach((row,i)=>{
     const name=row[0],total=row[1]||'0',matches=row[2]||'0',avg=row[3]||'0';
