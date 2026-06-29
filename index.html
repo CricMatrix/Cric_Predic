@@ -152,12 +152,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   border-radius:4px;pointer-events:none;
 }
 .field-winner{
-  display:flex;align-items:center;gap:8px;background:#fff;border-radius:10px;
-  padding:8px 14px;margin:0 auto 14px;max-width:300px;box-shadow:0 2px 6px rgba(0,0,0,.2);
-  position:relative;z-index:2;
+  display:flex;justify-content:center;margin:0 auto 14px;position:relative;z-index:2;
 }
-.field-winner .fp{min-width:38px;text-align:center;}
-.field-winner .ftxt{font-family:'Oswald',sans-serif;font-weight:700;font-size:.95rem;color:#212121;}
+.field-winner .field-card{max-width:none;min-width:190px;}
 .field-row-side{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;position:relative;z-index:2;}
 .field-card{
   background:#fff;border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;
@@ -185,9 +182,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   display:flex;align-items:flex-start;gap:10px;position:relative;z-index:2;
   box-shadow:0 2px 6px rgba(0,0,0,.18);
 }
-.field-extra .flbl{font-size:.64rem;color:#888;text-transform:uppercase;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif;font-weight:600;display:block;margin-bottom:2px;}
-.field-extra .fval{font-size:.8rem;color:#cc4a1a;font-weight:600;line-height:1.35;}
-.field-extra .fval b{color:#212121;font-weight:700;}
+.field-extra .fq{font-size:.78rem;color:#cc4a1a;font-weight:600;line-height:1.35;display:block;margin-bottom:3px;}
+.field-extra .fval{font-size:.85rem;color:#212121;font-weight:700;display:block;}
 @media(max-width:420px){
   .field-circle{width:190px;height:190px;top:78px;}
   .field-pitch{height:190px;top:78px;}
@@ -806,14 +802,16 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const extraHtml=(eQ||eA)?`
     <div class="field-extra">
       ${pp(ePts)}
-      <div><span class="flbl">Extraordinary Prediction (50 &amp; 100 points)</span>
-      <span class="fval">${esc(eQ)}${eA?` → <b>${esc(eA)}</b>`:''}</span></div>
+      <div>
+        ${eQ?`<span class="fq">${esc(eQ)}</span>`:''}
+        ${eA?`<span class="fval">${esc(eA)}</span>`:''}
+      </div>
     </div>`:'';
 
   const fieldHtml=`
     <div class="field-wrap">
       <div class="field-ground">
-        <div class="field-winner">${pp(winnerPts)}<span class="ftxt">Winner: ${winnerVal?esc(winnerVal):'—'}</span></div>
+        <div class="field-winner">${fieldCard('Winner',winnerVal,winnerPts)}</div>
         <div class="field-circle"></div>
         <div class="field-pitch"></div>
         <div class="field-row-side">
