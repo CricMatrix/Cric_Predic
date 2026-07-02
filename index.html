@@ -89,6 +89,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .row-notout{background:#f1f8e9}
 .sc-tbl tbody tr.dismiss-row td{padding-top:1px;padding-bottom:5px;font-style:italic;color:#757575;font-size:.72rem;font-family:'Barlow Condensed',sans-serif;border-bottom:1px solid #f0f0f0;}
 .sc-tbl tbody tr.dismiss-row td:not(:first-child){color:transparent}
+.match-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+@media(max-width:480px){.match-info-grid{grid-template-columns:1fr;}}
+.mi-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.mi-card-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9e9e9e;margin-bottom:3px;}
+.mi-card-val{font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:600;color:#212121;line-height:1.3;}
 .live-box{background:#fff;border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .live-title{background:#e8f5e9;border-bottom:1px solid #c8e6c9;padding:7px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#2e7d32;display:flex;align-items:center;gap:6px;}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#4caf50;animation:pulse 1.2s ease-in-out infinite;flex-shrink:0}
@@ -295,10 +300,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="hero-card">
         <div class="hero-top">
           <div class="hero-fixture" id="mi-fixture">—</div>
-          <div class="hero-meta-row" id="mi-venue-row" style="display:none">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span id="mi-venue">—</span>
-          </div>
+
           <div class="hero-meta-row" id="mi-rr-row" style="display:none">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span id="mi-rr">—</span>
@@ -338,6 +340,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="live-box" id="live-box" style="display:none">
         <div class="live-title"><div class="live-dot"></div>Live</div>
         <div class="live-tbl-wrap"><table class="live-tbl" id="live-tbl"></table></div>
+      </div>
+      <!-- Match Info section -->
+      <div class="match-info-section" id="match-info-section" style="display:none">
+        <div class="sh" style="margin-top:14px"><span class="sh-t">ℹ️ Match Info</span></div>
+        <div class="match-info-grid" id="match-info-grid"></div>
       </div>
     </div>
     <div id="sc-err" class="status" style="display:none">
@@ -522,7 +529,7 @@ function renderScorecard(pred,sc){
   const rr     =(pred[22]||[])[8]||'';
   const result =cel(sc,3,85);
   $('mi-fixture').textContent=fixture||'Match';
-  if(venue){$('mi-venue').textContent=venue;sh('mi-venue-row');}else{hd('mi-venue-row');}
+  /* venue moved to Match Info section below live stats */
   if(rr){$('mi-rr').textContent=rr;sh('mi-rr-row');}else{hd('mi-rr-row');}
   const miResult=$('mi-result');
   if(result){miResult.textContent=result;miResult.style.display='block';}
@@ -547,6 +554,7 @@ function renderScorecard(pred,sc){
   buildBowlTable('inn1-bowl',rng(sc,1,11,29,35));
   buildBowlTable('inn2-bowl',rng(sc,1,11,60,66));
   buildLive(rng(sc,35,41,2,7));
+  renderMatchInfo(sc);
 
   /* Auto-select 2nd innings if it has data, else stay on 1st */
   switchInnings(inn2HasData?2:1);
@@ -698,6 +706,37 @@ function buildBowlTable(id,data){
 }
 
 /* ── LIVE STATS ── */
+/* ════════════════════════════════════════════
+   MATCH INFO — Scorecard T20 AD27:AM33
+   AD=col29, rows 27-33 = sc[26..32]
+   Each pair: col29=label, col30=value (AD/AE)
+   Up to 7 rows of key-value info cards
+════════════════════════════════════════════ */
+function renderMatchInfo(sc){
+  const section=$('match-info-section');
+  const grid=$('match-info-grid');
+  if(!section||!grid) return;
+  grid.innerHTML='';
+
+  const rows=[];
+  for(let r=26;r<=32;r++){
+    const row=sc[r]||[];
+    const lbl=(row[29]||'').trim();  /* AD */
+    const val=(row[30]||'').trim();  /* AE */
+    if(lbl&&val) rows.push({lbl,val});
+  }
+
+  if(!rows.length){section.style.display='none';return;}
+
+  rows.forEach(({lbl,val})=>{
+    const card=document.createElement('div');
+    card.className='mi-card';
+    card.innerHTML=`<div class="mi-card-lbl">${esc(lbl)}</div><div class="mi-card-val">${esc(val)}</div>`;
+    grid.appendChild(card);
+  });
+  section.style.display='';
+}
+
 function buildLive(data){
   const box=$('live-box'),tbl=$('live-tbl');
   tbl.innerHTML='';
