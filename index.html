@@ -117,10 +117,49 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .chip:hover{border-color:#85b7eb;}
 .chip.active{background:#0c447c;color:#fff;border-color:#0c447c;}
 .pred-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+
+/* ── Prediction modal ── */
+.pred-modal-overlay{display:none;position:fixed;inset:0;z-index:500;align-items:flex-end;justify-content:center;}
+.pred-modal-overlay.open{display:flex;}
+.pred-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);}
+.pred-modal-sheet{
+  position:relative;z-index:1;background:#fff;border-radius:20px 20px 0 0;
+  width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
+  animation:slideUp .28s ease;
+  -webkit-overflow-scrolling:touch;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pred-modal-close{
+  position:sticky;top:0;right:0;z-index:10;
+  display:flex;justify-content:flex-end;padding:10px 14px 0;
+  background:transparent;
+}
+.pred-modal-close button{
+  background:#f5f5f5;border:none;border-radius:50%;width:30px;height:30px;
+  font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#555;
+}
+
+/* ── Player detail popup (inside modal) ── */
+.player-popup-overlay{display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;}
+.player-popup-overlay.open{display:flex;}
+.player-popup-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);}
+.player-popup{
+  position:relative;z-index:1;background:#fff;border-radius:14px;
+  padding:18px 18px 16px;width:90%;max-width:320px;
+  box-shadow:0 8px 32px rgba(0,0,0,.25);animation:popIn .2s ease;
+}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.player-popup-name{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;color:#1565c0;margin-bottom:10px;}
+.player-popup-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:.85rem;}
+.player-popup-row:last-child{border-bottom:none;}
+.player-popup-row span:first-child{color:#9e9e9e;}
+.player-popup-row span:last-child{font-weight:600;color:#212121;}
+.player-popup-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:1.1rem;cursor:pointer;color:#9e9e9e;}
 .pred-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;animation:fu .35s ease both;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 @keyframes fu{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
-.pred-summary{display:flex;align-items:center;padding:13px 16px;cursor:pointer;gap:12px;user-select:none;transition:background .15s}
-.pred-summary:hover{background:#f5f7ff}
+.pred-summary{display:flex;align-items:center;padding:13px 16px;cursor:default;gap:12px;user-select:none;}
+.pred-summary:hover{background:inherit}
 .pred-rank{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;min-width:28px;text-align:center;color:#9e9e9e;flex-shrink:0}
 .pred-avt{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3949ab,#1a237e);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:.9rem;font-weight:700;color:#fff;flex-shrink:0;border:2px solid #e8eaf6}
 .r1-avt{background:linear-gradient(135deg,#f9a825,#fdd835)!important;border-color:#f9a825!important;color:#3e2723!important}
@@ -355,16 +394,6 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   <div class="tab-panel" id="tab-pred">
     <div id="pred-ld" class="status"><div class="spin"></div><h3>Loading Predictions…</h3></div>
     <div id="pred-main" style="display:none">
-      <div class="search-bar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="predSearch" placeholder="Search player…" oninput="filterPredictions()"/>
-      </div>
-      <div class="filter-row" id="predFilters">
-        <div class="chip active" data-filter="all" onclick="setFilter('all',this)">All</div>
-        <div class="chip" data-filter="winners" onclick="setFilter('winners',this)">Winners only</div>
-        <div class="chip" data-filter="highest" onclick="setFilter('highest',this)">Sort: Highest</div>
-        <div class="chip" data-filter="newest" onclick="setFilter('newest',this)">Sort: Newest</div>
-      </div>
       <div class="sh"><span class="sh-t">Predictions</span><span class="sh-b" id="pred-cnt"></span></div>
       <div class="pred-list" id="pred-list"></div>
     </div>
@@ -806,13 +835,13 @@ function renderPredictions(predRows,all){
 
   allPredEntries=entries;
   predWinnerCount=Math.floor(entries.length/2);
-  predActiveFilter='all';
-  const search=$('predSearch');if(search)search.value='';
-  document.querySelectorAll('#predFilters .chip').forEach(c=>c.classList.remove('active'));
-  const allChip=document.querySelector('#predFilters .chip[data-filter="all"]');
-  if(allChip)allChip.classList.add('active');
 
-  applyPredictionsFilter();
+  const list=$('pred-list');list.innerHTML='';
+  entries.forEach((e,i)=>{
+    const card=buildPredCard(e,i+1,false,i);
+    list.appendChild(card);
+  });
+  $('pred-cnt').textContent=entries.length+' players';
   hd('pred-ld');sh('pred-main');hd('pred-err');
 }
 
@@ -831,7 +860,7 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const zeroCls=(pts)=>pts<=0?' zero':'';
   const ptsHtml=(pts)=>`<span class="field-pts${zeroCls(pts)}">${fmt(pts)} PTS</span>`;
   const statHtml=(lbl,val,pts)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span>${ptsHtml(pts)}</div>`;
-  const playerHtml=(val,pts,roleNote)=>`<div class="field-player"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}${ptsHtml(pts)}</div>`;
+  const playerHtml=(val,pts,roleNote)=>`<div class="field-player" ${val?`onclick="openPlayerPopup('${val.replace(/'/g,"\\'")}')"`:''}  style="${val?'cursor:pointer':''}"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}${ptsHtml(pts)}</div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -896,47 +925,56 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const card=document.createElement('div');
   card.className='pred-card';card.style.animationDelay=(idx*.04)+'s';
   card.innerHTML=`
-    <div class="pred-summary" onclick="toggleCard(this.closest('.pred-card'))">
-      <div class="pred-rank">${isWinner?'🏆':displayRank}</div>
-      <div class="pred-nm-wrap">
+    <div class="pred-summary">
+      <div class="pred-rank">${displayRank}</div>
+      <div class="pred-nm-wrap" style="cursor:pointer" onclick="openPredModal(this)">
         <div class="pred-nm">${esc(name)}</div>
         <div class="pred-ts-sm">${fmtDate(pred[0])}</div>
       </div>
       <div><div class="pred-tot">${fmt(totalPts)}</div><div class="pred-tot-lbl">pts</div></div>
-      <div class="expand-btn">+</div>
-    </div>
-    <div class="pred-details">${fieldHtml}</div>`;
+    </div>`;
+  /* Store field html as data for modal */
+  card.dataset.fieldHtml = fieldHtml;
   return card;
 }
 
-function setFilter(name,el){
-  predActiveFilter=name;
-  document.querySelectorAll('#predFilters .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  applyPredictionsFilter();
+/* ── Prediction field modal ── */
+function openPredModal(nameEl){
+  const card=nameEl.closest('.pred-card');
+  const html=card.dataset.fieldHtml||'';
+  $('predModalContent').innerHTML=html;
+  $('predModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePredModal(){
+  $('predModal').classList.remove('open');
+  document.body.style.overflow='';
 }
 
-function filterPredictions(){applyPredictionsFilter();}
-
-function applyPredictionsFilter(){
-  const q=(($('predSearch')||{}).value||'').trim().toLowerCase();
-  let rows=allPredEntries.map((e,i)=>({...e,origRank:i+1,isWinner:(i+1)<=predWinnerCount}));
-
-  if(q) rows=rows.filter(r=>r.name.toLowerCase().includes(q));
-  if(predActiveFilter==='winners') rows=rows.filter(r=>r.isWinner);
-  if(predActiveFilter==='highest') rows=[...rows].sort((a,b)=>b.totalPts-a.totalPts);
-  if(predActiveFilter==='newest') rows=[...rows].sort((a,b)=>{
-    const da=new Date(a.pred[0]),db=new Date(b.pred[0]);
-    if(isNaN(da)||isNaN(db))return 0;
-    return db-da;
-  });
-
-  const list=$('pred-list');list.innerHTML='';
-  rows.forEach((r,i)=>{
-    const card=buildPredCard(r,r.origRank,r.isWinner,i);
-    list.appendChild(card);
-  });
-  $('pred-cnt').textContent=rows.length+' player'+(rows.length===1?'':'s');
+/* ── Player detail popup ── */
+let _ptsDataCache=[];
+function openPlayerPopup(name){
+  $('ppName').textContent=name;
+  const body=$('ppBody');body.innerHTML='';
+  /* Find player in points data */
+  const clean=name.replace(/\s*\(.*?\)\s*/g,' ').replace(/\*/g,'').replace(/ Substitute/gi,'').replace(/ Impact Player/gi,'').trim().toLowerCase();
+  const row=_ptsDataCache.find(r=>(r[0]||'').toLowerCase().trim()===clean||(r[0]||'').toLowerCase().includes(clean));
+  if(row){
+    const labels=['Total Pts','Bat','Bowl','Field','Sel.by','Cap.by','VC.by'];
+    const vals=row.slice(1,8);
+    labels.forEach((lbl,i)=>{
+      const v=(vals[i]||'').trim();if(!v)return;
+      const div=document.createElement('div');div.className='player-popup-row';
+      div.innerHTML=`<span>${lbl}</span><span>${esc(v)}</span>`;
+      body.appendChild(div);
+    });
+  }else{
+    body.innerHTML='<div style="color:#9e9e9e;font-size:.85rem;padding:6px 0">No points data found</div>';
+  }
+  $('playerPopup').classList.add('open');
+}
+function closePlayerPopup(){
+  $('playerPopup').classList.remove('open');
 }
 
 function toggleCard(card){card.classList.toggle('open');}
@@ -1011,6 +1049,7 @@ function renderLeaderboard(rows){
     .filter(r=>r[0]);
 
   const sorted=[...dataRows].sort((a,b)=>n0(b[1])-n0(a[1]));
+  _ptsDataCache=sorted; /* cache for player popup */
 
   sorted.forEach((row,i)=>{
     const name=row[0],total=row[1]||'0',matches=row[2]||'0',avg=row[3]||'0';
@@ -1059,5 +1098,25 @@ function switchTab(name,el){
 loadData();
 setInterval(loadData,15*60*1000);
 </script>
+
+<!-- Prediction field modal -->
+<div class="pred-modal-overlay" id="predModal">
+  <div class="pred-modal-backdrop" onclick="closePredModal()"></div>
+  <div class="pred-modal-sheet" id="predModalSheet">
+    <div class="pred-modal-close"><button onclick="closePredModal()">✕</button></div>
+    <div id="predModalContent"></div>
+  </div>
+</div>
+
+<!-- Player detail popup -->
+<div class="player-popup-overlay" id="playerPopup">
+  <div class="player-popup-backdrop" onclick="closePlayerPopup()"></div>
+  <div class="player-popup">
+    <button class="player-popup-close" onclick="closePlayerPopup()">✕</button>
+    <div class="player-popup-name" id="ppName"></div>
+    <div id="ppBody"></div>
+  </div>
+</div>
+
 </body>
 </html>
