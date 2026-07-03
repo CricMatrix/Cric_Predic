@@ -1043,11 +1043,10 @@ function renderPoints(sc){
     list.appendChild(row);
   });
   $('pts-cnt').textContent=sorted.length+' players';
+  _ptsDataCache=sorted;  /* cache cricket player points for popup lookup */
+  console.log('[PtsCache] set',sorted.length,'players:',sorted.map(r=>r[0]));
   hd('pts-ld');sh('pts-main');hd('pts-err');
 }
-
-/* ════════════════════════════════════════════
-   LEADERBOARD — fetched by gid (separate sheet)
    Row 0 = headers: Name, Total, Matches Played, Average Points, [Match1], [Match2]...
    Rows 1+ = data
 ════════════════════════════════════════════ */
@@ -1074,7 +1073,6 @@ function renderLeaderboard(rows){
     .filter(r=>r[0]);
 
   const sorted=[...dataRows].sort((a,b)=>n0(b[1])-n0(a[1]));
-  _ptsDataCache=sorted; /* cache for player popup */
 
   sorted.forEach((row,i)=>{
     const name=row[0],total=row[1]||'0',matches=row[2]||'0',avg=row[3]||'0';
