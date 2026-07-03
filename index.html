@@ -553,6 +553,7 @@ async function loadData(){
 
 /* ── SCORECARD ── */
 function renderScorecard(pred,sc){
+  _scCache=sc; /* store for player detail popup */
   const fixture=(pred[21]||[])[0]||'';
   const venue  =(pred[22]||[])[12]||'';
   const rr     =(pred[22]||[])[8]||'';
@@ -953,6 +954,51 @@ function closePredModal(){
 
 /* ── Player detail popup ── */
 let _ptsDataCache=[];
+let _scCache=null;
+/* ════════ Per-player breakdown from scorecard ════════
+   From screenshots:
+   Inn1 bat : name=col12, pts at cols 20-26  (R,F,S,25*,SR,D,P)
+   Inn2 bat : name=col43, pts at cols 51-57
+   Inn1 bowl: name=col29, pts at cols 36-40  (W,B,M,E,P)
+   Inn2 bowl: name=col60, pts at cols 67-71
+══════════════════════════════════════════════════════ */
+function findBatDetails(clean){
+  if(!_scCache) return null;
+  for(let r=1;r<=30;r++){
+    const row=_scCache[r]||[];
+    if(cleanPName(row[12])===clean&&(row[12]||'').trim()){
+      console.log('[BatDet Inn1] row',r,'cols 20-26:',(row.slice(20,27)));
+      return{inn:1,r:row[20],f:row[21],s:row[22],b25:row[23],sr:row[24],d:row[25],p:row[26]};
+    }
+  }
+  for(let r=1;r<=30;r++){
+    const row=_scCache[r]||[];
+    if(cleanPName(row[43])===clean&&(row[43]||'').trim()){
+      console.log('[BatDet Inn2] row',r,'cols 51-57:',(row.slice(51,58)));
+      return{inn:2,r:row[51],f:row[52],s:row[53],b25:row[54],sr:row[55],d:row[56],p:row[57]};
+    }
+  }
+  return null;
+}
+function findBowlDetails(clean){
+  if(!_scCache) return null;
+  for(let r=1;r<=11;r++){
+    const row=_scCache[r]||[];
+    if(cleanPName(row[29])===clean&&(row[29]||'').trim()){
+      console.log('[BowlDet Inn1] row',r,'cols 36-40:',(row.slice(36,41)));
+      return{inn:1,w:row[36],b:row[37],m:row[38],e:row[39],p:row[40]};
+    }
+  }
+  for(let r=1;r<=11;r++){
+    const row=_scCache[r]||[];
+    if(cleanPName(row[60])===clean&&(row[60]||'').trim()){
+      console.log('[BowlDet Inn2] row',r,'cols 67-71:',(row.slice(67,72)));
+      return{inn:2,w:row[67],b:row[68],m:row[69],e:row[70],p:row[71]};
+    }
+  }
+  return null;
+}
+
 function cleanPName(s){
   return (s||'')
     .replace(/\([^)]*\)/g,'')   /* remove (C), (WK), etc */
@@ -965,17 +1011,12 @@ function cleanPName(s){
 function openPlayerPopup(name){
   $('ppName').textContent=name;
   const body=$('ppBody');body.innerHTML='';
-  console.log('[Popup] name=',name,'| cache size=',_ptsDataCache.length);
-  console.log('[Popup] cache names=',_ptsDataCache.map(r=>r[0]));
   const clean=cleanPName(name);
-  console.log('[Popup] clean=',clean);
-  /* 1. Exact match after cleaning */
+
+  /* ── Summary from Points table ── */
   let row=_ptsDataCache.find(r=>cleanPName(r[0])===clean);
-  /* 2. Partial: cache name includes search */
   if(!row) row=_ptsDataCache.find(r=>cleanPName(r[0]).includes(clean));
-  /* 3. Partial: search includes cache name (handles abbreviated names) */
   if(!row) row=_ptsDataCache.find(r=>clean.includes(cleanPName(r[0])));
-  /* 4. Word-level: all words in clean found in cache name */
   if(!row){
     const words=clean.split(' ').filter(w=>w.length>2);
     row=_ptsDataCache.find(r=>{
@@ -983,20 +1024,58 @@ function openPlayerPopup(name){
       return words.length>0&&words.every(w=>cn.includes(w));
     });
   }
-  console.log('[Popup] matched row=',row);
+
   if(row){
-    const labels=['Total Pts','Batting','Bowling','Fielding','Selected by','Captain by','V.Captain by'];
+    const summaryLabels=['Total Pts','Batting','Bowling','Fielding','Sel. by','Cap. by','VC. by'];
     const vals=row.slice(1,8);
-    labels.forEach((lbl,i)=>{
+    summaryLabels.forEach((lbl,i)=>{
       const v=(vals[i]||'').trim();if(!v)return;
       const div=document.createElement('div');div.className='player-popup-row';
       div.innerHTML=`<span>${lbl}</span><span>${esc(v)}</span>`;
       body.appendChild(div);
     });
   }else{
-    body.innerHTML=`<div style="color:#9e9e9e;font-size:.85rem;padding:6px 0">No data for "${esc(name)}"</div>`;
+    body.innerHTML=`<div style="color:#9e9e9e;font-size:.85rem;padding:6px 0">No summary data for "${esc(name)}"</div>`;
   }
+
+  /* ── Batting breakdown from scorecard ── */
+  const bat=findBatDetails(clean);
+  if(bat&&bat.p){
+    const sec=document.createElement('div');
+    sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
+    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Batting Points (Inn ${bat.inn})</div>`;
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:5px;';
+    [['Runs',bat.r],['4s',bat.f],['6s',bat.s],['25*',bat.b25],['SR',bat.sr],['Duck',bat.d],['Total',bat.p]].forEach(([l,v])=>{
+      const n=parseFloat(v)||0;
+      const col=n<0?'#c62828':n>0?'#1565c0':'#9e9e9e';
+      const bg=n<0?'#ffebee':n>0?'#e6f1fb':'#f9f9f9';
+      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px"><div style="font-size:.62rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col}">${v||'0'}</div></div>`;
+    });
+    sec.appendChild(grid);
+    body.appendChild(sec);
+  }
+
+  /* ── Bowling breakdown from scorecard ── */
+  const bowl=findBowlDetails(clean);
+  if(bowl&&bowl.p){
+    const sec=document.createElement('div');
+    sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
+    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Bowling Points (Inn ${bowl.inn})</div>`;
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:5px;';
+    [['Wkt',bowl.w],['Bonus',bowl.b],['Maiden',bowl.m],['Eco',bowl.e],['Total',bowl.p]].forEach(([l,v])=>{
+      const n=parseFloat(v)||0;
+      const col=n<0?'#c62828':n>0?'#2e7d32':'#9e9e9e';
+      const bg=n<0?'#ffebee':n>0?'#e8f5e9':'#f9f9f9';
+      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 2px"><div style="font-size:.62rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col}">${v||'0'}</div></div>`;
+    });
+    sec.appendChild(grid);
+    body.appendChild(sec);
+  }
+
   $('playerPopup').classList.add('open');
+
 }
 function closePlayerPopup(){
   $('playerPopup').classList.remove('open');
