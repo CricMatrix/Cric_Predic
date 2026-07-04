@@ -1062,7 +1062,7 @@ function openPlayerPopup(name){
 
   /* ── Batting breakdown from scorecard ── */
   const bat=findBatDetails(clean);
-  if(bat&&bat.p){
+  if(bat&&parseFloat(bat.p||0)!==0){
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Batting Points (Inn ${bat.inn})</div>`;
@@ -1073,9 +1073,10 @@ function openPlayerPopup(name){
       ['25*',null,bat.b25],['SR',bat.statSR,bat.sr],['Duck',null,bat.d],['Total',null,bat.p]
     ].forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
+      if(n===0&&l!=='Total') return; /* hide zero-point items (except Total) */
       const col=n<0?'#b71c1c':n>0?'#0d47a1':'#424242';
       const bg=n<0?'#ffebee':n>0?'#e6f1fb':'#f5f5f5';
-      const statTxt=stat&&stat.trim()?`<div style="font-size:.72rem;font-weight:700;color:#212121">${stat}</div>`:'';
+      const statTxt=stat&&stat.trim()?`<div style="font-size:.76rem;font-weight:700;color:#333">${stat}</div>`:'';
       const ptsTxt=`<div style="font-size:.68rem;font-weight:600;color:${col}">(${pts||'0'} pts)</div>`;
       grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px">${statTxt}${ptsTxt}<div style="font-size:.6rem;color:#9e9e9e;margin-top:1px">${l}</div></div>`;
     });
@@ -1085,7 +1086,7 @@ function openPlayerPopup(name){
 
   /* ── Bowling breakdown from scorecard ── */
   const bowl=findBowlDetails(clean);
-  if(bowl&&bowl.p){
+  if(bowl&&parseFloat(bowl.p||0)!==0){
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Bowling Points (Inn ${bowl.inn})</div>`;
@@ -1096,9 +1097,11 @@ function openPlayerPopup(name){
       ['Maiden',bowl.statM,bowl.m],['Eco',bowl.statE,bowl.e],['Total',null,bowl.p]
     ].forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
+      if(pts!==null&&n===0&&l!=='Total'&&l!=='Ov') return; /* hide zero-point items */
+      if(l==='Ov'&&(!stat||!stat.trim())) return;
       const col=n<0?'#b71c1c':n>0?'#1b5e20':'#424242';
       const bg=n<0?'#ffebee':n>0?'#e8f5e9':'#f5f5f5';
-      const statTxt=stat&&stat.trim()?`<div style="font-size:.72rem;font-weight:700;color:#212121">${stat}</div>`:'';
+      const statTxt=stat&&stat.trim()?`<div style="font-size:.76rem;font-weight:700;color:#333">${stat}</div>`:'';
       const ptsTxt=pts!=null?`<div style="font-size:.68rem;font-weight:600;color:${col}">(${pts||'0'} pts)</div>`:'';
       grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 2px">${statTxt}${ptsTxt}<div style="font-size:.6rem;color:#9e9e9e;margin-top:1px">${l}</div></div>`;
     });
