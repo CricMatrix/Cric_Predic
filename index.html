@@ -27,9 +27,23 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .rbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
 .rbtn:hover{background:rgba(255,255,255,.25);border-color:#fff}
 .rbtn:disabled{opacity:.4;cursor:not-allowed}
-.tabs{max-width:100%;margin:0;padding:0 14px;display:flex;gap:2px;border-bottom:2px solid var(--border);position:sticky;top:72px;z-index:99;background:#f4f4f4;}
-@media(max-width:600px){.tabs{top:60px;}}
-.tab{padding:10px 20px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#757575;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;border-radius:4px 4px 0 0}
+.tabs{max-width:100%;margin:0;padding:0 10px;display:flex;gap:1px;border-bottom:2px solid var(--border);position:sticky;top:66px;z-index:99;background:#f4f4f4;}
+@media(max-width:600px){.tabs{top:54px;}}
+@media(max-width:520px){
+  .field-header{padding:10px 12px;}
+  .field-player-name{font-size:16px;}
+  .field-pts-value{font-size:19px;}
+  .field-ground{padding:14px 10px 6px;}
+  .field-winner-value{font-size:28px;}
+  .field-stat-value{font-size:16px;}
+  .field-stat-label{font-size:7.5px;}
+  .field-player-label{font-size:10px;}
+  .field-pts{font-size:9.5px;}
+  .field-footer{padding:10px 12px 14px;}
+  .field-footer-cond{font-size:9.5px;}
+  .field-footer-desc{font-size:9.5px;}
+}
+.tab{padding:7px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#757575;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;border-radius:4px 4px 0 0}
 .tab:hover{color:#1a237e;background:rgba(26,35,126,.05)}
 .tab.active{color:#1a237e;border-bottom-color:#1a237e;background:rgba(26,35,126,.06)}
 .content{max-width:1100px;margin:0 auto;padding:16px 12px 60px}
@@ -968,14 +982,18 @@ function findBatDetails(clean){
     const row=_scCache[r]||[];
     if(cleanPName(row[12])===clean&&(row[12]||'').trim()){
       console.log('[BatDet Inn1] row',r,'cols 20-26:',(row.slice(20,27)));
-      return{inn:1,r:row[20],f:row[21],s:row[22],b25:row[23],sr:row[24],d:row[25],p:row[26]};
+      return{inn:1,
+        statR:row[13],statF:row[15],statS:row[16],statSR:row[17],
+        r:row[20],f:row[21],s:row[22],b25:row[23],sr:row[24],d:row[25],p:row[26]};
     }
   }
   for(let r=1;r<=30;r++){
     const row=_scCache[r]||[];
     if(cleanPName(row[43])===clean&&(row[43]||'').trim()){
       console.log('[BatDet Inn2] row',r,'cols 51-57:',(row.slice(51,58)));
-      return{inn:2,r:row[51],f:row[52],s:row[53],b25:row[54],sr:row[55],d:row[56],p:row[57]};
+      return{inn:2,
+        statR:row[44],statF:row[46],statS:row[47],statSR:row[48],
+        r:row[51],f:row[52],s:row[53],b25:row[54],sr:row[55],d:row[56],p:row[57]};
     }
   }
   return null;
@@ -986,14 +1004,18 @@ function findBowlDetails(clean){
     const row=_scCache[r]||[];
     if(cleanPName(row[29])===clean&&(row[29]||'').trim()){
       console.log('[BowlDet Inn1] row',r,'cols 36-40:',(row.slice(36,41)));
-      return{inn:1,w:row[36],b:row[37],m:row[38],e:row[39],p:row[40]};
+      return{inn:1,
+        statO:row[30],statW:row[33],statM:row[31],statE:row[34],
+        w:row[36],b:row[37],m:row[38],e:row[39],p:row[40]};
     }
   }
   for(let r=1;r<=11;r++){
     const row=_scCache[r]||[];
     if(cleanPName(row[60])===clean&&(row[60]||'').trim()){
       console.log('[BowlDet Inn2] row',r,'cols 67-71:',(row.slice(67,72)));
-      return{inn:2,w:row[67],b:row[68],m:row[69],e:row[70],p:row[71]};
+      return{inn:2,
+        statO:row[61],statW:row[64],statM:row[62],statE:row[65],
+        w:row[67],b:row[68],m:row[69],e:row[70],p:row[71]};
     }
   }
   return null;
@@ -1046,11 +1068,16 @@ function openPlayerPopup(name){
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Batting Points (Inn ${bat.inn})</div>`;
     const grid=document.createElement('div');
     grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:5px;';
-    [['Runs',bat.r],['4s',bat.f],['6s',bat.s],['25*',bat.b25],['SR',bat.sr],['Duck',bat.d],['Total',bat.p]].forEach(([l,v])=>{
-      const n=parseFloat(v)||0;
-      const col=n<0?'#c62828':n>0?'#1565c0':'#9e9e9e';
-      const bg=n<0?'#ffebee':n>0?'#e6f1fb':'#f9f9f9';
-      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px"><div style="font-size:.62rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col}">${v||'0'}</div></div>`;
+    [
+      ['Runs',bat.statR,bat.r],['4s',bat.statF,bat.f],['6s',bat.statS,bat.s],
+      ['25*',null,bat.b25],['SR',bat.statSR,bat.sr],['Duck',null,bat.d],['Total',null,bat.p]
+    ].forEach(([l,stat,pts])=>{
+      const n=parseFloat(pts)||0;
+      const col=n<0?'#b71c1c':n>0?'#0d47a1':'#424242';
+      const bg=n<0?'#ffebee':n>0?'#e6f1fb':'#f5f5f5';
+      const statTxt=stat&&stat.trim()?`<div style="font-size:.72rem;font-weight:700;color:#212121">${stat}</div>`:'';
+      const ptsTxt=`<div style="font-size:.68rem;font-weight:600;color:${col}">(${pts||'0'} pts)</div>`;
+      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px">${statTxt}${ptsTxt}<div style="font-size:.6rem;color:#9e9e9e;margin-top:1px">${l}</div></div>`;
     });
     sec.appendChild(grid);
     body.appendChild(sec);
@@ -1064,11 +1091,16 @@ function openPlayerPopup(name){
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Bowling Points (Inn ${bowl.inn})</div>`;
     const grid=document.createElement('div');
     grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:5px;';
-    [['Wkt',bowl.w],['Bonus',bowl.b],['Maiden',bowl.m],['Eco',bowl.e],['Total',bowl.p]].forEach(([l,v])=>{
-      const n=parseFloat(v)||0;
-      const col=n<0?'#c62828':n>0?'#2e7d32':'#9e9e9e';
-      const bg=n<0?'#ffebee':n>0?'#e8f5e9':'#f9f9f9';
-      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 2px"><div style="font-size:.62rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col}">${v||'0'}</div></div>`;
+    [
+      ['Ov',bowl.statO,null],['Wkt',bowl.statW,bowl.w],
+      ['Maiden',bowl.statM,bowl.m],['Eco',bowl.statE,bowl.e],['Total',null,bowl.p]
+    ].forEach(([l,stat,pts])=>{
+      const n=parseFloat(pts)||0;
+      const col=n<0?'#b71c1c':n>0?'#1b5e20':'#424242';
+      const bg=n<0?'#ffebee':n>0?'#e8f5e9':'#f5f5f5';
+      const statTxt=stat&&stat.trim()?`<div style="font-size:.72rem;font-weight:700;color:#212121">${stat}</div>`:'';
+      const ptsTxt=pts!=null?`<div style="font-size:.68rem;font-weight:600;color:${col}">(${pts||'0'} pts)</div>`:'';
+      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 2px">${statTxt}${ptsTxt}<div style="font-size:.6rem;color:#9e9e9e;margin-top:1px">${l}</div></div>`;
     });
     sec.appendChild(grid);
     body.appendChild(sec);
