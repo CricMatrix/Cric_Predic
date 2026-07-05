@@ -504,21 +504,51 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
         <div id="pf-squad-list"></div>
       </div>
 
-      <!-- Step 5: Captain / VC -->
+      <!-- Step 5: Captain (unique — not one of the 5 above) -->
       <div class="predict-card">
-        <label class="predict-lbl">Captain <span style="color:#f9a825">★ 2×</span></label>
-        <div class="predict-cvc-row" id="pf-captain-row"></div>
-      </div>
-      <div class="predict-card">
-        <label class="predict-lbl">Vice-Captain <span style="color:#1565c0">1.5×</span></label>
-        <div class="predict-cvc-row" id="pf-vc-row"></div>
+        <div class="predict-picker-hdr">
+          <label class="predict-lbl" style="margin:0">Pick Captain <span style="color:#f9a825">★ 2×</span></label>
+        </div>
+        <div style="font-size:.74rem;color:#888;margin-bottom:6px;">Must be different from your 5 players above</div>
+        <div id="pf-captain-list"></div>
       </div>
 
-      <!-- Step 6: Extra prediction -->
+      <!-- Step 6: Vice-Captain (unique — not one of the 5 or captain) -->
+      <div class="predict-card">
+        <div class="predict-picker-hdr">
+          <label class="predict-lbl" style="margin:0">Pick Vice-Captain <span style="color:#1565c0">1.5×</span></label>
+        </div>
+        <div style="font-size:.74rem;color:#888;margin-bottom:6px;">Must be different from your 5 players and Captain</div>
+        <div id="pf-vc-list"></div>
+      </div>
+
+      <!-- Step 7: Extra prediction -->
       <div class="predict-card">
         <label class="predict-lbl">Extraordinary Prediction</label>
-        <div style="font-size:.78rem;color:#888;margin-bottom:6px;">Team score ≥ 210 (50) / ≥ 240 (100)</div>
-        <input type="text" id="pf-extra" class="predict-input" placeholder="Your answer (e.g. team name)"/>
+        <select id="pf-extra-q" class="predict-input" style="margin-bottom:10px;">
+          <option value="Team score ≥ 210 (50) / ≥ 240 (100)">Team score ≥ 210 (50) / ≥ 240 (100)</option>
+          <option value="Team score ≤ 120 (50) / ≤ 100 (100)">Team score ≤ 120 (50) / ≤ 100 (100)</option>
+          <option value="Win margin ≥ 50 (50) / ≥ 75 (100)">Win margin ≥ 50 (50) / ≥ 75 (100)</option>
+          <option value="≤10 run win (50) / ≤4 run win (100)">≤10 run win (50) / ≤4 run win (100)</option>
+          <option value="Chase ≤ 2 wkts (50) / without losing a wkt (100)">Chase ≤ 2 wkts (50) / without losing a wkt (100)</option>
+          <option value="Win by exact no. of wickets (50)">Win by exact no. of wickets (50)</option>
+          <option value="Chase ≤ 17 overs (50) / ≤ 15 overs (100)">Chase ≤ 17 overs (50) / ≤ 15 overs (100)</option>
+          <option value="2 Players with ≥ 40 runs (50) / ≥ 50 runs (100)">2 Players with ≥ 40 runs (50) / ≥ 50 runs (100)</option>
+          <option value="80 runs Partnership (50) / 120 runs Partnership (100)">80 runs Partnership (50) / 120 runs Partnership (100)</option>
+          <option value="Top 6 Batsman below ≤ 5 runs (50) / Duck (100)">Top 6 Batsman below ≤ 5 runs (50) / Duck (100)</option>
+          <option value="Batsman ≥ 75 runs (50) / ≥ 100 runs (100)">Batsman ≥ 75 runs (50) / ≥ 100 runs (100)</option>
+          <option value="Batsman w/ ≥ 25 runs & 220+ SR (50) / w/ ≥ 50 runs & 220+ SR (100)">Batsman w/ ≥ 25 runs &amp; 220+ SR (50) / w/ ≥ 50 runs &amp; 220+ SR (100)</option>
+          <option value="Batsman w/ ≥ 30 runs ≤ 120 SR (50) / w/ ≥ 50 runs ≤ 120 SR (100)">Batsman w/ ≥ 30 runs ≤ 120 SR (50) / w/ ≥ 50 runs ≤ 120 SR (100)</option>
+          <option value="Batsman w/ ≥ 12 boundaries (50) / w/ ≥ 15 boundaries (100)">Batsman w/ ≥ 12 boundaries (50) / w/ ≥ 15 boundaries (100)</option>
+          <option value="Bowler ≥ 3 wkts (50) / Bowler ≥ 4 wkts (100)">Bowler ≥ 3 wkts (50) / Bowler ≥ 4 wkts (100)</option>
+          <option value="Bowler w/ min.2 ovrs, 1 wkt, ≤4 eco. (50)">Bowler w/ min.2 ovrs, 1 wkt, ≤4 eco. (50)</option>
+          <option value="Bowler w/ min. 2 ovrs ≥ 12 eco. (50) / ≥ 14 eco. (100)">Bowler w/ min. 2 ovrs ≥ 12 eco. (50) / ≥ 14 eco. (100)</option>
+          <option value="Bowler to bowl ≥ 1 maiden over (50) / ≥ 2 maiden over (100)">Bowler to bowl ≥ 1 maiden over (50) / ≥ 2 maiden over (100)</option>
+          <option value="WK/Fielder w/ ≥ 3 wkts (50) / w/ ≥ 4 wkts (100)(runout,stump,catch)">WK/Fielder w/ ≥ 3 wkts (50) / w/ ≥ 4 wkts (100)(runout,stump,catch)</option>
+          <option value="Allround preformance ≥ 30 runs & ≥ 1 wkt (50) / ≥ 50 runs & ≥ 1 wkt (100)">Allround preformance ≥ 30 runs &amp; ≥ 1 wkt (50) / ≥ 50 runs &amp; ≥ 1 wkt (100)</option>
+          <option value="Player of the Match (50)">Player of the Match (50)</option>
+        </select>
+        <input type="text" id="pf-extra" class="predict-input" placeholder="Your answer (e.g. player or team name)"/>
       </div>
 
       <button class="predict-submit" id="pf-submit" onclick="submitPrediction()">Submit Prediction</button>
