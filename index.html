@@ -347,6 +347,18 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .predict-submit{width:100%;padding:14px;background:#1a237e;color:#fff;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background .15s;}
 .predict-submit:hover{background:#283593;}
 .predict-submit:disabled{background:#ccc;cursor:not-allowed;}
+
+.predict-timer{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:center;}
+.predict-timer-lbl{font-size:.72rem;color:#7a5b00;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.predict-timer-val{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#c62828;letter-spacing:.5px;}
+.predict-timer-val.urgent{animation:timerPulse 1s ease-in-out infinite;}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.predict-closed{text-align:center;padding:50px 20px;}
+.predict-closed-icon{font-size:2.5rem;margin-bottom:12px;}
+.predict-closed-title{font-family:'Oswald',sans-serif;font-size:1.3rem;font-weight:700;color:#c62828;margin-bottom:8px;}
+.predict-closed-sub{font-size:.9rem;color:#666;margin-bottom:6px;}
+.predict-closed-time{font-size:.82rem;color:#999;}
 .pchip b{font-weight:700;}
 @media(max-width:480px){
   .hdr{padding:10px 14px;}
@@ -473,6 +485,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
     <div id="predict-ld" class="status"><div class="spin"></div><h3>Loading Squads…</h3></div>
     <div id="predict-main" style="display:none">
       <div class="sh"><span class="sh-t">🎯 Make Your Prediction</span></div>
+      <div id="predict-timer-box" style="display:none"></div>
 
       <!-- Step 1: Name -->
       <div class="predict-card">
@@ -1442,28 +1455,84 @@ function renderLeaderboard(rows){
 ════════════════════════════════════════════ */
 let predictState={teamA:'',teamB:'',squadA:[],squadB:[],winner:'',selectedPlayers:[],captain:'',vc:''};
 
+let _predictTimerInterval=null;
+
 async function loadPredictTab(){
   sh('predict-ld');hd('predict-main');hd('predict-err');
   try{
     const rows=await fetchSheetByGid(638993616);
     /* B1=teamA name(sc[0][1]), E1=teamB name(sc[0][4]); B2:B30=squadA, E2:E30=squadB */
+    /* H1=deadline date/time (sc[0][7]) — enter as "2026-07-10 18:30" */
     const teamA=(rows[0]||[])[1]||'Team A';
     const teamB=(rows[0]||[])[4]||'Team B';
     const squadA=rows.slice(1,30).map(r=>(r[1]||'').trim()).filter(Boolean);
     const squadB=rows.slice(1,30).map(r=>(r[4]||'').trim()).filter(Boolean);
+    const deadlineStr=(rows[0]||[])[7]||'';
 
     predictState.teamA=teamA;predictState.teamB=teamB;
     predictState.squadA=squadA;predictState.squadB=squadB;
     predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';predictState.winner='';
 
+    /* Parse deadline */
+    let deadline=null;
+    if(deadlineStr.trim()){
+      let d=new Date(deadlineStr.trim());
+      if(isNaN(d)) d=new Date(deadlineStr.trim().replace(' ','T'));
+      if(!isNaN(d)) deadline=d;
+    }
+
+    if(deadline&&new Date()>deadline){
+      showPredictClosed(deadline);
+      hd('predict-ld');sh('predict-main');hd('predict-err');
+      return;
+    }
+
     renderPredictWinner();
     renderPredictSquadList();
     renderPredictCVC();
     hd('predict-ld');sh('predict-main');hd('predict-err');
+
+    if(deadline) startPredictTimer(deadline);
+
   }catch(e){
     console.error(e);
     hd('predict-ld');hd('predict-main');sh('predict-err');
   }
+}
+
+function startPredictTimer(deadline){
+  const box=$('predict-timer-box');
+  box.style.display='';
+  if(_predictTimerInterval) clearInterval(_predictTimerInterval);
+
+  function tick(){
+    const now=new Date();
+    const diff=deadline-now;
+    if(diff<=0){
+      clearInterval(_predictTimerInterval);
+      showPredictClosed(deadline);
+      return;
+    }
+    const h=Math.floor(diff/3600000);
+    const m=Math.floor((diff%3600000)/60000);
+    const s=Math.floor((diff%60000)/1000);
+    const urgent=diff<5*60000; /* under 5 min */
+    const timeStr=h>0?`${h}h ${m}m ${s}s`:`${m}m ${s}s`;
+    box.innerHTML=`<div class="predict-timer"><div class="predict-timer-lbl">⏳ Submissions close in</div><div class="predict-timer-val${urgent?' urgent':''}">${timeStr}</div></div>`;
+  }
+  tick();
+  _predictTimerInterval=setInterval(tick,1000);
+}
+
+function showPredictClosed(deadline){
+  if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
+  $('predict-main').innerHTML=`
+    <div class="predict-closed">
+      <div class="predict-closed-icon">⏰</div>
+      <div class="predict-closed-title">Predictions Closed</div>
+      <div class="predict-closed-sub">The submission deadline for this match has passed.</div>
+      <div class="predict-closed-time">Deadline was: ${deadline.toLocaleString([],{dateStyle:'medium',timeStyle:'short'})}</div>
+    </div>`;
 }
 
 function renderPredictWinner(){
@@ -1671,4 +1740,3 @@ setInterval(loadData,15*60*1000);
 
 </body>
 </html>
-
