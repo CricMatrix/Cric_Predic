@@ -697,7 +697,7 @@ function renderScorecard(pred,sc){
   const fixture=(pred[21]||[])[0]||'';
   const venue  =(pred[22]||[])[12]||'';
   const rr     =(pred[22]||[])[8]||'';
-  const result =cel(sc,3,85);
+  const result =cel(sc,3,89);
   $('mi-fixture').textContent=fixture||'Match';
   /* venue moved to Match Info section below live stats */
   if(rr){$('mi-rr').textContent=rr;sh('mi-rr-row');}else{hd('mi-rr-row');}
@@ -705,10 +705,10 @@ function renderScorecard(pred,sc){
   if(result){miResult.textContent=result;miResult.style.display='block';}
   else{miResult.style.display='none';}
 
-  const i1team =cel(sc,1,85);  /* CH3 */
-  const i1score=cel(sc,1,86);  /* CI3 */
-  const i2team =cel(sc,2,85);  /* CH4 */
-  const i2score=cel(sc,2,86);  /* CI4 */
+  const i1team =cel(sc,1,89);  /* CH3 */
+  const i1score=cel(sc,1,90);  /* CI3 */
+  const i2team =cel(sc,2,89);  /* CH4 */
+  const i2score=cel(sc,2,90);  /* CI4 */
 
   /* Hero scoreboard — team names (linked) + scores */
   $('score-t1-nm').innerHTML=i1team?teamLink(i1team):'Team 1';
