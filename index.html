@@ -512,28 +512,28 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 4: Player picker -->
       <div class="predict-card">
         <div class="predict-picker-hdr">
-          <label class="predict-lbl" style="margin:0">Pick 5 Players</label>
-          <span class="predict-count" id="pf-player-count">0/5 selected</span>
+          <label class="predict-lbl" style="margin:0">Pick 7 Players</label>
+          <span class="predict-count" id="pf-player-count">0/7 selected</span>
         </div>
         <div id="pf-squad-list"></div>
       </div>
 
-      <!-- Step 5: Captain (unique — not one of the 5 above) -->
+      <!-- Step 5: Captain (choose from your 7) -->
       <div class="predict-card">
         <div class="predict-picker-hdr">
           <label class="predict-lbl" style="margin:0">Pick Captain <span style="color:#f9a825">★ 2×</span></label>
         </div>
-        <div style="font-size:.74rem;color:#888;margin-bottom:6px;">Must be different from your 5 players above</div>
-        <div id="pf-captain-list"></div>
+        <div style="font-size:.74rem;color:#888;margin-bottom:6px;">Choose 1 of your 7 selected players</div>
+        <div class="predict-cvc-row" id="pf-captain-list"></div>
       </div>
 
-      <!-- Step 6: Vice-Captain (unique — not one of the 5 or captain) -->
+      <!-- Step 6: Vice-Captain (choose from your 7, different from Captain) -->
       <div class="predict-card">
         <div class="predict-picker-hdr">
           <label class="predict-lbl" style="margin:0">Pick Vice-Captain <span style="color:#1565c0">1.5×</span></label>
         </div>
-        <div style="font-size:.74rem;color:#888;margin-bottom:6px;">Must be different from your 5 players and Captain</div>
-        <div id="pf-vc-list"></div>
+        <div style="font-size:.74rem;color:#888;margin-bottom:6px;">Choose 1 of your 7 selected players (different from Captain)</div>
+        <div class="predict-cvc-row" id="pf-vc-list"></div>
       </div>
 
       <!-- Step 7: Extra prediction -->
@@ -1457,12 +1457,21 @@ let predictState={teamA:'',teamB:'',squadA:[],squadB:[],winner:'',selectedPlayer
 
 let _predictTimerInterval=null;
 
+/* Direct CSV export by gid — does NOT skip row 1 (unlike gviz/tq) */
+async function fetchSheetByGidDirect(gid){
+  const r=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`);
+  if(!r.ok)throw new Error('Bilateral sheet HTTP '+r.status);
+  const t=await r.text();
+  if(t.startsWith('<!'))throw new Error('Bilateral sheet not accessible');
+  return parseCSV(t);
+}
+
 async function loadPredictTab(){
   sh('predict-ld');hd('predict-main');hd('predict-err');
   try{
-    const rows=await fetchSheetByGid(638993616);
-    /* B1=teamA name(sc[0][1]), E1=teamB name(sc[0][4]); B2:B30=squadA, E2:E30=squadB */
-    /* H1=deadline date/time (sc[0][7]) — enter as "2026-07-10 18:30" */
+    const rows=await fetchSheetByGidDirect(638993616);
+    /* B1=teamA name(rows[0][1]), E1=teamB name(rows[0][4]); B2:B30=squadA, E2:E30=squadB */
+    /* H1=deadline date/time (rows[0][7]) — enter as "2026-07-10 18:30" */
     const teamA=(rows[0]||[])[1]||'Team A';
     const teamB=(rows[0]||[])[4]||'Team B';
     const squadA=rows.slice(1,30).map(r=>(r[1]||'').trim()).filter(Boolean);
@@ -1483,6 +1492,16 @@ async function loadPredictTab(){
 
     if(deadline&&new Date()>deadline){
       showPredictClosed(deadline);
+      hd('predict-ld');sh('predict-main');hd('predict-err');
+      return;
+    }
+
+    /* Check submission cap — max 20 predictions per match */
+    const predTxt=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`).then(r=>r.text());
+    const predRows=parseCSV(predTxt);
+    const submissionCount=predRows.slice(1,25).filter(r=>(r[1]||'').trim()).length;
+    if(submissionCount>=20){
+      showPredictFull(submissionCount);
       hd('predict-ld');sh('predict-main');hd('predict-err');
       return;
     }
@@ -1524,6 +1543,17 @@ function startPredictTimer(deadline){
   _predictTimerInterval=setInterval(tick,1000);
 }
 
+function showPredictFull(count){
+  if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
+  $('predict-main').innerHTML=`
+    <div class="predict-closed">
+      <div class="predict-closed-icon">🔒</div>
+      <div class="predict-closed-title">Predictions Full</div>
+      <div class="predict-closed-sub">Maximum of 20 predictions reached for this match.</div>
+      <div class="predict-closed-time">${count}/20 submitted</div>
+    </div>`;
+}
+
 function showPredictClosed(deadline){
   if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
   $('predict-main').innerHTML=`
@@ -1548,7 +1578,7 @@ function renderPredictWinner(){
 
 function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
-  const maxReached=predictState.selectedPlayers.length>=5;
+  const maxReached=predictState.selectedPlayers.length>=7;
 
   [[predictState.teamA,predictState.squadA],[predictState.teamB,predictState.squadB]].forEach(([teamName,squad])=>{
     if(!squad.length)return;
@@ -1568,7 +1598,7 @@ function renderPredictSquadList(){
       list.appendChild(row);
     });
   });
-  $('pf-player-count').textContent=predictState.selectedPlayers.length+'/5 selected';
+  $('pf-player-count').textContent=predictState.selectedPlayers.length+'/7 selected';
 }
 
 function togglePlayerSelect(player){
@@ -1579,7 +1609,7 @@ function togglePlayerSelect(player){
     if(predictState.captain===player)predictState.captain='';
     if(predictState.vc===player)predictState.vc='';
   }else{
-    if(predictState.selectedPlayers.length>=5)return;
+    if(predictState.selectedPlayers.length>=7)return;
     predictState.selectedPlayers.push(player);
   }
   renderPredictSquadList();
@@ -1593,63 +1623,39 @@ function renderPredictCVC(){
 
 function renderCaptainList(){
   const list=$('pf-captain-list');list.innerHTML='';
-  if(predictState.selectedPlayers.length<5){
-    list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select your 5 players first</div>';
+  if(predictState.selectedPlayers.length<7){
+    list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 7 players first</div>';
     return;
   }
-  [[predictState.teamA,predictState.squadA],[predictState.teamB,predictState.squadB]].forEach(([teamName,squad])=>{
-    if(!squad.length)return;
-    const eligible=squad.filter(p=>!predictState.selectedPlayers.includes(p));
-    if(!eligible.length)return;
-    const hdr=document.createElement('div');hdr.className='predict-team-hdr';hdr.textContent=teamName;
-    list.appendChild(hdr);
-    eligible.forEach(player=>{
-      const isSelected=predictState.captain===player;
-      const isTakenByVC=predictState.vc===player;
-      const row=document.createElement('div');row.className='predict-player-row';
-      const nm=document.createElement('span');nm.className='predict-player-nm';nm.textContent=player;
-      const btn=document.createElement('button');
-      btn.className='predict-add-btn'+(isSelected?' selected':'');
-      btn.textContent=isSelected?'✓':'+';
-      btn.disabled=isTakenByVC;
-      btn.onclick=()=>{
-        predictState.captain=isSelected?'':player;
-        renderPredictCVC();
-      };
-      row.appendChild(nm);row.appendChild(btn);
-      list.appendChild(row);
-    });
+  predictState.selectedPlayers.forEach(player=>{
+    const chip=document.createElement('div');
+    chip.className='predict-cvc-chip'+(predictState.captain===player?' active':'')+(predictState.vc===player?' disabled':'');
+    chip.textContent=player;
+    chip.onclick=()=>{
+      if(predictState.vc===player)return;
+      predictState.captain=predictState.captain===player?'':player;
+      renderPredictCVC();
+    };
+    list.appendChild(chip);
   });
 }
 
 function renderVCList(){
   const list=$('pf-vc-list');list.innerHTML='';
-  if(predictState.selectedPlayers.length<5){
-    list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select your 5 players first</div>';
+  if(predictState.selectedPlayers.length<7){
+    list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 7 players first</div>';
     return;
   }
-  [[predictState.teamA,predictState.squadA],[predictState.teamB,predictState.squadB]].forEach(([teamName,squad])=>{
-    if(!squad.length)return;
-    const eligible=squad.filter(p=>!predictState.selectedPlayers.includes(p));
-    if(!eligible.length)return;
-    const hdr=document.createElement('div');hdr.className='predict-team-hdr';hdr.textContent=teamName;
-    list.appendChild(hdr);
-    eligible.forEach(player=>{
-      const isSelected=predictState.vc===player;
-      const isTakenByCap=predictState.captain===player;
-      const row=document.createElement('div');row.className='predict-player-row';
-      const nm=document.createElement('span');nm.className='predict-player-nm';nm.textContent=player;
-      const btn=document.createElement('button');
-      btn.className='predict-add-btn'+(isSelected?' selected':'');
-      btn.textContent=isSelected?'✓':'+';
-      btn.disabled=isTakenByCap;
-      btn.onclick=()=>{
-        predictState.vc=isSelected?'':player;
-        renderPredictCVC();
-      };
-      row.appendChild(nm);row.appendChild(btn);
-      list.appendChild(row);
-    });
+  predictState.selectedPlayers.forEach(player=>{
+    const chip=document.createElement('div');
+    chip.className='predict-cvc-chip'+(predictState.vc===player?' active':'')+(predictState.captain===player?' disabled':'');
+    chip.textContent=player;
+    chip.onclick=()=>{
+      if(predictState.captain===player)return;
+      predictState.vc=predictState.vc===player?'':player;
+      renderPredictCVC();
+    };
+    list.appendChild(chip);
   });
 }
 
@@ -1664,9 +1670,12 @@ async function submitPrediction(){
   if(!name){statusEl.textContent='⚠️ Please enter your name';statusEl.style.color='#c62828';return;}
   if(!predictState.winner){statusEl.textContent='⚠️ Please pick a winner';statusEl.style.color='#c62828';return;}
   if(!inn1||!inn2){statusEl.textContent='⚠️ Please enter both innings scores';statusEl.style.color='#c62828';return;}
-  if(predictState.selectedPlayers.length!==5){statusEl.textContent='⚠️ Please select exactly 5 players';statusEl.style.color='#c62828';return;}
+  if(predictState.selectedPlayers.length!==7){statusEl.textContent='⚠️ Please select exactly 7 players';statusEl.style.color='#c62828';return;}
   if(!predictState.captain){statusEl.textContent='⚠️ Please pick a Captain';statusEl.style.color='#c62828';return;}
   if(!predictState.vc){statusEl.textContent='⚠️ Please pick a Vice-Captain';statusEl.style.color='#c62828';return;}
+
+  /* The 5 "normal" player slots = the 7 selected, minus whichever 2 are Captain/VC */
+  const normalPlayers=predictState.selectedPlayers.filter(p=>p!==predictState.captain&&p!==predictState.vc);
 
   const btn=$('pf-submit');btn.disabled=true;btn.textContent='Submitting…';
   statusEl.textContent='';
@@ -1677,11 +1686,11 @@ async function submitPrediction(){
   body.append('entry.1396255681',predictState.winner);
   body.append('entry.1904748839',inn1);
   body.append('entry.18410935',inn2);
-  body.append('entry.1010945082',predictState.selectedPlayers[0]||'');
-  body.append('entry.996932073',predictState.selectedPlayers[1]||'');
-  body.append('entry.520129115',predictState.selectedPlayers[2]||'');
-  body.append('entry.1333467641',predictState.selectedPlayers[3]||'');
-  body.append('entry.1553169445',predictState.selectedPlayers[4]||'');
+  body.append('entry.1010945082',normalPlayers[0]||'');
+  body.append('entry.996932073',normalPlayers[1]||'');
+  body.append('entry.520129115',normalPlayers[2]||'');
+  body.append('entry.1333467641',normalPlayers[3]||'');
+  body.append('entry.1553169445',normalPlayers[4]||'');
   body.append('entry.1011323377',predictState.captain);
   body.append('entry.509445901',predictState.vc);
   body.append('entry.1752138029',$('pf-extra-q').value);
@@ -1740,5 +1749,3 @@ setInterval(loadData,15*60*1000);
 
 </body>
 </html>
-
-
