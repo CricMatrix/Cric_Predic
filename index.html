@@ -1680,34 +1680,46 @@ async function submitPrediction(){
   const btn=$('pf-submit');btn.disabled=true;btn.textContent='Submitting…';
   statusEl.textContent='';
 
-  const FORM_ACTION='https://docs.google.com/forms/d/e/1FAIpQLSdfhQpJhKltHRH4HrILMeE7Unl72n02P5gC0I-bw2M8viaSkw/formResponse';
-  const body=new URLSearchParams();
-  body.append('entry.1163097992',name);
-  body.append('entry.1396255681',predictState.winner);
-  body.append('entry.1904748839',inn1);
-  body.append('entry.18410935',inn2);
-  body.append('entry.1010945082',normalPlayers[0]||'');
-  body.append('entry.996932073',normalPlayers[1]||'');
-  body.append('entry.520129115',normalPlayers[2]||'');
-  body.append('entry.1333467641',normalPlayers[3]||'');
-  body.append('entry.1553169445',normalPlayers[4]||'');
-  body.append('entry.1011323377',predictState.captain);
-  body.append('entry.509445901',predictState.vc);
-  body.append('entry.1752138029',$('pf-extra-q').value);
-  body.append('entry.849323329',extra);
+  const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyBGjUC0XQOTYcgyA35vbuBYvsVmuS304qk6ES5v0pZZUXK9pZTW8rKhJA8meGQAqVB/exec';
+  const payload={
+    name:name,
+    winner:predictState.winner,
+    inn1:inn1,
+    inn2:inn2,
+    player1:normalPlayers[0]||'',
+    player2:normalPlayers[1]||'',
+    player3:normalPlayers[2]||'',
+    player4:normalPlayers[3]||'',
+    player5:normalPlayers[4]||'',
+    captain:predictState.captain,
+    vc:predictState.vc,
+    extraQ:$('pf-extra-q').value,
+    extraA:extra
+  };
 
   try{
-    await fetch(FORM_ACTION,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});
-    statusEl.style.color='#2e7d32';
-    statusEl.textContent='✅ Prediction submitted successfully!';
-    /* Reset form */
-    $('pf-name').value='';$('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
-    predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
-    renderPredictWinner();renderPredictSquadList();renderPredictCVC();
+    const res=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'}, /* avoids CORS preflight on Apps Script */
+      body:JSON.stringify(payload)
+    });
+    const result=await res.json();
+
+    if(result.success){
+      statusEl.style.color='#2e7d32';
+      statusEl.textContent='✅ Prediction submitted successfully! (Row '+result.row+')';
+      /* Reset form */
+      $('pf-name').value='';$('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
+      predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
+      renderPredictWinner();renderPredictSquadList();renderPredictCVC();
+    }else{
+      statusEl.style.color='#c62828';
+      statusEl.textContent='⚠️ '+(result.message||'Submission failed.');
+    }
   }catch(e){
     console.error(e);
     statusEl.style.color='#c62828';
-    statusEl.textContent='⚠️ Submission failed. Please try again.';
+    statusEl.textContent='⚠️ Submission failed: '+e.message;
   }
   btn.disabled=false;btn.textContent='Submit Prediction';
 }
