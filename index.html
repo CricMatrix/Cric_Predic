@@ -348,6 +348,42 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .predict-submit:hover{background:#283593;}
 .predict-submit:disabled{background:#ccc;cursor:not-allowed;}
 
+/* Team-wise selection counts */
+.predict-team-counts{display:flex;gap:8px;margin-bottom:8px;}
+.predict-team-count-chip{flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:#555;}
+.predict-team-count-chip b{color:#1565c0;font-size:.92rem;}
+
+/* Battery-style segmented progress bar */
+.predict-battery{display:flex;gap:3px;margin-bottom:12px;height:14px;}
+.predict-battery-seg{flex:1;background:#eee;border-radius:2px;transition:background .2s;}
+.predict-battery-seg.filled{background:linear-gradient(90deg,#43a047,#66bb6a);}
+
+/* 2-column squad grid: Team A left, Team B right */
+.predict-squad-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+.predict-squad-col{display:flex;flex-direction:column;}
+.predict-team-hdr2{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#1565c0;padding:6px 0;border-bottom:2px solid #e6f1fb;margin-bottom:4px;text-align:center;}
+.predict-player-card{display:flex;flex-direction:column;padding:8px 6px;border-bottom:1px solid #f5f5f5;position:relative;}
+.predict-player-card-top{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.predict-player-card .predict-player-nm2{font-size:.8rem;font-weight:600;color:#212121;line-height:1.2;}
+.predict-player-card .predict-player-sel{font-size:.66rem;color:#9e9e9e;margin-top:2px;}
+.predict-add-btn2{width:26px;height:26px;border-radius:50%;border:2px solid #2e7d32;background:#fff;color:#2e7d32;font-size:.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;}
+.predict-add-btn2.selected{background:#2e7d32;color:#fff;}
+.predict-add-btn2:disabled{opacity:.3;cursor:not-allowed;border-color:#ccc;color:#ccc;}
+
+/* Preview + Submit button row */
+.predict-btn-row{display:flex;gap:10px;}
+.predict-preview-btn{flex:1;padding:14px;background:#fff;color:#1a237e;border:2px solid #1a237e;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.predict-preview-btn:hover{background:#e6f1fb;}
+.predict-btn-row .predict-submit{flex:1.4;}
+
+/* Preview modal (reuses same overlay pattern as pred-modal) */
+.preview-modal-overlay{display:none;position:fixed;inset:0;z-index:550;align-items:flex-end;justify-content:center;}
+.preview-modal-overlay.open{display:flex;}
+.preview-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.55);}
+.preview-modal-sheet{position:relative;z-index:1;background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .28s ease;-webkit-overflow-scrolling:touch;}
+.preview-modal-close{position:sticky;top:0;right:0;z-index:10;display:flex;justify-content:flex-end;padding:10px 14px 0;background:transparent;}
+.preview-modal-close button{background:#f5f5f5;border:none;border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555;}
+
 .predict-timer{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:center;}
 .predict-timer-lbl{font-size:.72rem;color:#7a5b00;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
 .predict-timer-val{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#c62828;letter-spacing:.5px;}
@@ -515,7 +551,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
           <label class="predict-lbl" style="margin:0">Pick 7 Players</label>
           <span class="predict-count" id="pf-player-count">0/7 selected</span>
         </div>
-        <div id="pf-squad-list"></div>
+        <div class="predict-team-counts" id="pf-team-counts"></div>
+        <div class="predict-battery" id="pf-battery"></div>
+        <div class="predict-squad-grid" id="pf-squad-list"></div>
       </div>
 
       <!-- Step 5: Captain (choose from your 7) -->
@@ -565,7 +603,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
         <input type="text" id="pf-extra" class="predict-input" placeholder="Your answer (e.g. player or team name)"/>
       </div>
 
-      <button class="predict-submit" id="pf-submit" onclick="submitPrediction()">Submit Prediction</button>
+      <div class="predict-btn-row">
+        <button class="predict-preview-btn" id="pf-preview" onclick="openPredictPreview()">👁 Preview</button>
+        <button class="predict-submit" id="pf-submit" onclick="submitPrediction()">Submit Prediction</button>
+      </div>
       <div id="pf-status" style="text-align:center;font-size:.85rem;margin-top:10px;"></div>
     </div>
     <div id="predict-err" class="status" style="display:none"><h3>⚠️ Could not load squads</h3></div>
@@ -1580,25 +1621,46 @@ function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
   const maxReached=predictState.selectedPlayers.length>=7;
 
-  [[predictState.teamA,predictState.squadA],[predictState.teamB,predictState.squadB]].forEach(([teamName,squad])=>{
-    if(!squad.length)return;
-    const hdr=document.createElement('div');
-    hdr.className='predict-team-hdr';hdr.textContent=teamName;
-    list.appendChild(hdr);
+  const colA=document.createElement('div');colA.className='predict-squad-col';
+  const colB=document.createElement('div');colB.className='predict-squad-col';
+
+  [[predictState.teamA,predictState.squadA,colA],[predictState.teamB,predictState.squadB,colB]].forEach(([teamName,squad,col])=>{
+    const hdr=document.createElement('div');hdr.className='predict-team-hdr2';hdr.textContent=teamName;
+    col.appendChild(hdr);
     squad.forEach(player=>{
       const isSelected=predictState.selectedPlayers.includes(player);
-      const row=document.createElement('div');row.className='predict-player-row';
-      const nm=document.createElement('span');nm.className='predict-player-nm';nm.textContent=player;
+      const card=document.createElement('div');card.className='predict-player-card';
+      const top=document.createElement('div');top.className='predict-player-card-top';
+      const nmWrap=document.createElement('div');
+      nmWrap.innerHTML=`<div class="predict-player-nm2">${esc(player)}</div>`;
       const btn=document.createElement('button');
-      btn.className='predict-add-btn'+(isSelected?' selected':'');
+      btn.className='predict-add-btn2'+(isSelected?' selected':'');
       btn.textContent=isSelected?'✓':'+';
       btn.disabled=!isSelected&&maxReached;
       btn.onclick=()=>togglePlayerSelect(player);
-      row.appendChild(nm);row.appendChild(btn);
-      list.appendChild(row);
+      top.appendChild(nmWrap);top.appendChild(btn);
+      card.appendChild(top);
+      col.appendChild(card);
     });
   });
+  list.appendChild(colA);list.appendChild(colB);
+
   $('pf-player-count').textContent=predictState.selectedPlayers.length+'/7 selected';
+
+  /* Team-wise counts */
+  const countA=predictState.selectedPlayers.filter(p=>predictState.squadA.includes(p)).length;
+  const countB=predictState.selectedPlayers.filter(p=>predictState.squadB.includes(p)).length;
+  $('pf-team-counts').innerHTML=`
+    <div class="predict-team-count-chip">${esc(predictState.teamA)}: <b>${countA}</b></div>
+    <div class="predict-team-count-chip">${esc(predictState.teamB)}: <b>${countB}</b></div>`;
+
+  /* Battery-style progress bar (7 segments) */
+  const battery=$('pf-battery');battery.innerHTML='';
+  for(let i=0;i<7;i++){
+    const seg=document.createElement('div');
+    seg.className='predict-battery-seg'+(i<predictState.selectedPlayers.length?' filled':'');
+    battery.appendChild(seg);
+  }
 }
 
 function togglePlayerSelect(player){
@@ -1657,6 +1719,77 @@ function renderVCList(){
     };
     list.appendChild(chip);
   });
+}
+
+/* ── Preview current picks on cricket field (before submission) ── */
+function openPredictPreview(){
+  const name=($('pf-name').value||'').trim()||'Your Team';
+  const winnerVal=predictState.winner;
+  const inn1Val=($('pf-inn1').value||'').trim();
+  const inn2Val=($('pf-inn2').value||'').trim();
+  const normalPlayers=predictState.selectedPlayers.filter(p=>p!==predictState.captain&&p!==predictState.vc);
+  const capVal=predictState.captain;
+  const vcVal=predictState.vc;
+  const eQ=$('pf-extra-q')?$('pf-extra-q').value:'';
+  const eA=($('pf-extra').value||'').trim();
+
+  const statHtml=(lbl,val)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span></div>`;
+  const playerHtml=(val,roleNote)=>`<div class="field-player"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}</div>`;
+
+  const extraHtml=(eQ||eA)?`
+    <div class="field-footer-text">
+      ${eQ?`<span class="field-footer-cond">${esc(eQ)}</span>`:''}
+      ${eA?`<span class="field-footer-desc">${esc(eA)}</span>`:''}
+    </div>`:'';
+
+  const html=`
+    <div class="field-wrap">
+      <div class="field-header">
+        <div class="field-header-left">
+          <span class="field-trophy">👁</span>
+          <div class="field-name-block">
+            <span class="field-player-name">${esc(name)}</span>
+            <span class="field-timestamp">Preview — not yet submitted</span>
+          </div>
+        </div>
+      </div>
+      <div class="field-ground">
+        <div class="field-winner-hero">
+          <span class="field-winner-eyebrow">Winner</span>
+          <span class="field-winner-value">${winnerVal?esc(winnerVal):'—'}</span>
+        </div>
+        <div class="field-row">
+          ${statHtml('1st Innings',inn1Val)}
+          ${statHtml('2nd Innings',inn2Val)}
+        </div>
+        <div class="field-divider"></div>
+        <div class="field-row">
+          ${playerHtml(normalPlayers[0])}
+          ${playerHtml(normalPlayers[1])}
+        </div>
+        <div class="field-row">
+          ${playerHtml(normalPlayers[2])}
+          ${playerHtml(normalPlayers[3])}
+        </div>
+        <div class="field-row single">
+          ${playerHtml(normalPlayers[4])}
+        </div>
+        <div class="field-divider"></div>
+        <div class="field-row">
+          ${playerHtml(capVal,'Captain · 2×')}
+          ${playerHtml(vcVal,'Vice-Captain · 1.5×')}
+        </div>
+      </div>
+      ${extraHtml?`<div class="field-footer">${extraHtml}</div>`:''}
+    </div>`;
+
+  $('previewModalContent').innerHTML=html;
+  $('previewModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePredictPreview(){
+  $('previewModal').classList.remove('open');
+  document.body.style.overflow='';
 }
 
 async function submitPrediction(){
@@ -1746,6 +1879,15 @@ setInterval(loadData,15*60*1000);
   <div class="pred-modal-sheet" id="predModalSheet">
     <div class="pred-modal-close"><button onclick="closePredModal()">✕</button></div>
     <div id="predModalContent"></div>
+  </div>
+</div>
+
+<!-- Predict-tab preview modal (before submission) -->
+<div class="preview-modal-overlay" id="previewModal">
+  <div class="pred-modal-backdrop" onclick="closePredictPreview()"></div>
+  <div class="preview-modal-sheet">
+    <div class="preview-modal-close"><button onclick="closePredictPreview()">✕</button></div>
+    <div id="previewModalContent"></div>
   </div>
 </div>
 
