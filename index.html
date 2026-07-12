@@ -530,7 +530,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 1: Name -->
       <div class="predict-card">
         <label class="predict-lbl">Your Name</label>
-        <input type="text" id="pf-name" class="predict-input" placeholder="Enter your name"/>
+        <input type="text" id="pf-name" class="predict-input" placeholder="Enter your name" onblur="checkExistingPrediction()"/>
+        <div id="pf-edit-note" style="display:none;margin-top:8px;padding:8px 10px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;font-size:.78rem;color:#a8650f;font-weight:600;">✏️ Editing your existing prediction</div>
       </div>
 
       <!-- Step 2: Winner -->
@@ -1796,6 +1797,51 @@ function closePredictPreview(){
   document.body.style.overflow='';
 }
 
+/* ── Check for existing prediction by name, pre-fill if found ── */
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyBGjUC0XQOTYcgyA35vbuBYvsVmuS304qk6ES5v0pZZUXK9pZTW8rKhJA8meGQAqVB/exec';
+let _isEditingExisting=false;
+
+async function checkExistingPrediction(){
+  const name=$('pf-name').value.trim();
+  if(!name)return;
+
+  try{
+    const res=await fetch(`${APPS_SCRIPT_URL}?name=${encodeURIComponent(name)}`);
+    const result=await res.json();
+
+    if(result.found){
+      _isEditingExisting=true;
+      $('pf-edit-note').style.display='block';
+      $('pf-submit').textContent='Update Prediction';
+
+      const d=result.data;
+      predictState.winner=d.winner||'';
+      $('pf-inn1').value=d.inn1||'';
+      $('pf-inn2').value=d.inn2||'';
+      $('pf-extra').value=d.extraA||'';
+      if(d.extraQ)$('pf-extra-q').value=d.extraQ;
+
+      /* Rebuild 7 selected players = 5 normal + captain + vc */
+      const normals=[d.player1,d.player2,d.player3,d.player4,d.player5].filter(Boolean);
+      predictState.selectedPlayers=[...normals];
+      if(d.captain&&!predictState.selectedPlayers.includes(d.captain))predictState.selectedPlayers.push(d.captain);
+      if(d.vc&&!predictState.selectedPlayers.includes(d.vc))predictState.selectedPlayers.push(d.vc);
+      predictState.captain=d.captain||'';
+      predictState.vc=d.vc||'';
+
+      renderPredictWinner();
+      renderPredictSquadList();
+      renderPredictCVC();
+    }else{
+      _isEditingExisting=false;
+      $('pf-edit-note').style.display='none';
+      $('pf-submit').textContent='Submit Prediction';
+    }
+  }catch(e){
+    console.error('Lookup failed:',e);
+  }
+}
+
 async function submitPrediction(){
   const name=$('pf-name').value.trim();
   const inn1=$('pf-inn1').value.trim();
@@ -1816,8 +1862,6 @@ async function submitPrediction(){
 
   const btn=$('pf-submit');btn.disabled=true;btn.textContent='Submitting…';
   statusEl.textContent='';
-
-  const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyBGjUC0XQOTYcgyA35vbuBYvsVmuS304qk6ES5v0pZZUXK9pZTW8rKhJA8meGQAqVB/exec';
   const payload={
     name:name,
     winner:predictState.winner,
@@ -1844,10 +1888,15 @@ async function submitPrediction(){
 
     if(result.success){
       statusEl.style.color='#2e7d32';
-      statusEl.textContent='✅ Prediction submitted successfully! (Row '+result.row+')';
+      statusEl.textContent=result.updated
+        ? '✅ Prediction updated successfully! (Row '+result.row+')'
+        : '✅ Prediction submitted successfully! (Row '+result.row+')';
       /* Reset form */
       $('pf-name').value='';$('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
       predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
+      _isEditingExisting=false;
+      $('pf-edit-note').style.display='none';
+      $('pf-submit').textContent='Submit Prediction';
       renderPredictWinner();renderPredictSquadList();renderPredictCVC();
     }else{
       statusEl.style.color='#c62828';
