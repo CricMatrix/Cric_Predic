@@ -582,29 +582,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 7: Extra prediction -->
       <div class="predict-card">
         <label class="predict-lbl">Extraordinary Prediction</label>
-        <select id="pf-extra-q" class="predict-input" style="margin-bottom:10px;">
-          <option value="Team score ≥ 210 (50) / ≥ 240 (100)">Team score ≥ 210 (50) / ≥ 240 (100)</option>
-          <option value="Team score ≤ 120 (50) / ≤ 100 (100)">Team score ≤ 120 (50) / ≤ 100 (100)</option>
-          <option value="Win margin ≥ 50 (50) / ≥ 75 (100)">Win margin ≥ 50 (50) / ≥ 75 (100)</option>
-          <option value="≤10 run win (50) / ≤4 run win (100)">≤10 run win (50) / ≤4 run win (100)</option>
-          <option value="Chase ≤ 2 wkts (50) / without losing a wkt (100)">Chase ≤ 2 wkts (50) / without losing a wkt (100)</option>
-          <option value="Win by exact no. of wickets (50)">Win by exact no. of wickets (50)</option>
-          <option value="Chase ≤ 17 overs (50) / ≤ 15 overs (100)">Chase ≤ 17 overs (50) / ≤ 15 overs (100)</option>
-          <option value="2 Players with ≥ 40 runs (50) / ≥ 50 runs (100)">2 Players with ≥ 40 runs (50) / ≥ 50 runs (100)</option>
-          <option value="80 runs Partnership (50) / 120 runs Partnership (100)">80 runs Partnership (50) / 120 runs Partnership (100)</option>
-          <option value="Top 6 Batsman below ≤ 5 runs (50) / Duck (100)">Top 6 Batsman below ≤ 5 runs (50) / Duck (100)</option>
-          <option value="Batsman ≥ 75 runs (50) / ≥ 100 runs (100)">Batsman ≥ 75 runs (50) / ≥ 100 runs (100)</option>
-          <option value="Batsman w/ ≥ 25 runs & 220+ SR (50) / w/ ≥ 50 runs & 220+ SR (100)">Batsman w/ ≥ 25 runs &amp; 220+ SR (50) / w/ ≥ 50 runs &amp; 220+ SR (100)</option>
-          <option value="Batsman w/ ≥ 30 runs ≤ 120 SR (50) / w/ ≥ 50 runs ≤ 120 SR (100)">Batsman w/ ≥ 30 runs ≤ 120 SR (50) / w/ ≥ 50 runs ≤ 120 SR (100)</option>
-          <option value="Batsman w/ ≥ 12 boundaries (50) / w/ ≥ 15 boundaries (100)">Batsman w/ ≥ 12 boundaries (50) / w/ ≥ 15 boundaries (100)</option>
-          <option value="Bowler ≥ 3 wkts (50) / Bowler ≥ 4 wkts (100)">Bowler ≥ 3 wkts (50) / Bowler ≥ 4 wkts (100)</option>
-          <option value="Bowler w/ min.2 ovrs, 1 wkt, ≤4 eco. (50)">Bowler w/ min.2 ovrs, 1 wkt, ≤4 eco. (50)</option>
-          <option value="Bowler w/ min. 2 ovrs ≥ 12 eco. (50) / ≥ 14 eco. (100)">Bowler w/ min. 2 ovrs ≥ 12 eco. (50) / ≥ 14 eco. (100)</option>
-          <option value="Bowler to bowl ≥ 1 maiden over (50) / ≥ 2 maiden over (100)">Bowler to bowl ≥ 1 maiden over (50) / ≥ 2 maiden over (100)</option>
-          <option value="WK/Fielder w/ ≥ 3 wkts (50) / w/ ≥ 4 wkts (100)(runout,stump,catch)">WK/Fielder w/ ≥ 3 wkts (50) / w/ ≥ 4 wkts (100)(runout,stump,catch)</option>
-          <option value="Allround preformance ≥ 30 runs & ≥ 1 wkt (50) / ≥ 50 runs & ≥ 1 wkt (100)">Allround preformance ≥ 30 runs &amp; ≥ 1 wkt (50) / ≥ 50 runs &amp; ≥ 1 wkt (100)</option>
-          <option value="Player of the Match (50)">Player of the Match (50)</option>
-        </select>
+        <select id="pf-extra-q" class="predict-input" style="margin-bottom:10px;"></select>
         <input type="text" id="pf-extra" class="predict-input" placeholder="Your answer (e.g. player or team name)"/>
       </div>
 
@@ -729,6 +707,9 @@ async function loadData(){
       fetchSheet(['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'])
     ]);
     const pred=predTxt;
+    /* A45 = pred[44][0] — dropdown that says "Scorecard T20" or "Scorecard ODI" */
+    _matchFormat=/odi/i.test((pred[44]||[])[0]||'')?'ODI':'T20';
+    console.log('[Format] Detected match format:',_matchFormat);
     renderScorecard(pred,sc);
     renderPredictions(pred.slice(1,21).filter(r=>r.some(c=>c)),pred);
     renderPoints(sc);
@@ -1499,6 +1480,63 @@ function renderLeaderboard(rows){
 /* ════════════════════════════════════════════
    PREDICT TAB — squad fetch + player picker + form submit
 ════════════════════════════════════════════ */
+let _matchFormat='T20'; /* detected from Prediction LO A45 */
+
+const EXTRA_PRED_OPTIONS_T20=[
+  "Team score ≥ 210 (50) / ≥ 240 (100)",
+  "Team score ≤ 120 (50) / ≤ 100 (100)",
+  "Win margin ≥ 50 (50) / ≥ 75 (100)",
+  "≤10 run win (50) / ≤4 run win (100)",
+  "Chase ≤ 2 wkts (50) / without losing a wkt (100)",
+  "Win by exact no. of wickets (50)",
+  "Chase ≤ 17 overs (50) / ≤ 15 overs (100)",
+  "2 Players with ≥ 40 runs (50) / ≥ 50 runs (100)",
+  "80 runs Partnership (50) / 120 runs Partnership (100)",
+  "Top 6 Batsman below ≤ 5 runs (50) / Duck (100)",
+  "Batsman ≥ 75 runs (50) / ≥ 100 runs (100)",
+  "Batsman w/ ≥ 25 runs & 220+ SR (50) / w/ ≥ 50 runs & 220+ SR (100)",
+  "Batsman w/ ≥ 30 runs ≤ 120 SR (50) / w/ ≥ 50 runs ≤ 120 SR (100)",
+  "Batsman w/ ≥ 12 boundaries (50) / w/ ≥ 15 boundaries (100)",
+  "Bowler ≥ 3 wkts (50) / Bowler ≥ 4 wkts (100)",
+  "Bowler w/ min.2 ovrs, 1 wkt, ≤4 eco. (50)",
+  "Bowler w/ min. 2 ovrs ≥ 12 eco. (50) / ≥ 14 eco. (100)",
+  "Bowler to bowl ≥ 1 maiden over (50) / ≥ 2 maiden over (100)",
+  "WK/Fielder w/ ≥ 3 wkts (50) / w/ ≥ 4 wkts (100)(runout,stump,catch)",
+  "Allround preformance ≥ 30 runs & ≥ 1 wkt (50) / ≥ 50 runs & ≥ 1 wkt (100)",
+  "Player of the Match (50)"
+];
+
+const EXTRA_PRED_OPTIONS_ODI=[
+  "Team score ≥ 350 (50) / ≥ 400 (100)",
+  "Team score ≤ 250 (50) / ≤ 200 (100)",
+  "Win margin ≥ 50 (50) / ≥ 100 (100)",
+  "≤25 run win (50) / ≤10 run win (100)",
+  "Chase ≤ 3 wkts (50) / Chase ≤ 1 wkts (100)",
+  "Win by exact no. of wickets (50)",
+  "Chase ≤ 40 overs (50) / ≤ 35 overs (100)",
+  "2 Players with ≥ 50 runs (50) / ≥ 75 runs (100)",
+  "100 runs Partnership (50) / 125 runs Partnership (100)",
+  "Top 6 Batsman below ≤ 10 runs (50) / below ≤ 5 runs (100)",
+  "Batsman ≥ 75 runs (50) / ≥ 100 runs (100)",
+  "Batsman w/ ≥ 40 runs & 150+ SR (50) / w/ ≥ 60 runs & 150+ SR (100)",
+  "Batsman w/ ≥ 40 runs ≤ 80 SR (50) / w/ ≥ 60 runs ≤ 80 SR (100)",
+  "Batsman w/ ≥ 12 boundaries (50) / w/ ≥ 15 boundaries (100)",
+  "Bowler ≥ 3 wkts (50) / Bowler ≥ 4 wkts (100)",
+  "Bowler w/ min.5 ovrs, 1 wkt, ≤4 eco. (50)",
+  "Bowler w/ min. 5 ovrs ≥ 8 eco. (50) / ≥ 10 eco. (100)",
+  "Bowler to bowl ≥ 2 maiden over (50) / ≥ 4 maiden over (100)",
+  "WK/Fielder w/ ≥ 3 wkts (50) / w/ ≥ 4 wkts (100)(runout,stump,catch)",
+  "Allround preformance ≥ 30 runs & ≥ 1 wkt (50) / ≥ 50 runs & ≥ 1 wkt (100)",
+  "Player of the Match (50)"
+];
+
+function populateExtraPredDropdown(){
+  const sel=$('pf-extra-q');
+  if(!sel)return;
+  const opts=_matchFormat==='ODI'?EXTRA_PRED_OPTIONS_ODI:EXTRA_PRED_OPTIONS_T20;
+  sel.innerHTML=opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${esc(o)}</option>`).join('');
+}
+
 let predictState={teamA:'',teamB:'',squadA:[],squadB:[],winner:'',selectedPlayers:[],captain:'',vc:''};
 
 let _predictTimerInterval=null;
@@ -1528,11 +1566,22 @@ async function loadPredictTab(){
     predictState.squadA=squadA;predictState.squadB=squadB;
     predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';predictState.winner='';
 
-    /* Parse deadline */
+    /* Parse deadline — anchor to IST (+05:30) so it's the SAME moment
+       for every visitor worldwide, not relative to their local device clock.
+       Accepts: "2026-07-10T18:30:00+05:30" (preferred) or plain "2026-07-10 18:30"
+       (legacy format — auto-assumed to be IST for backward compatibility). */
     let deadline=null;
     if(deadlineStr.trim()){
-      let d=new Date(deadlineStr.trim());
-      if(isNaN(d)) d=new Date(deadlineStr.trim().replace(' ','T'));
+      let raw=deadlineStr.trim();
+      let d;
+      if(/[+-]\d{2}:\d{2}$/.test(raw)||/Z$/.test(raw)){
+        /* Already has explicit timezone/offset — parse as-is */
+        d=new Date(raw.replace(' ','T'));
+      }else{
+        /* No timezone given — assume IST (+05:30) explicitly */
+        const isoLike=raw.replace(' ','T');
+        d=new Date(isoLike.length===16?isoLike+':00+05:30':isoLike+'+05:30');
+      }
       if(!isNaN(d)) deadline=d;
     }
 
@@ -1555,6 +1604,7 @@ async function loadPredictTab(){
     renderPredictWinner();
     renderPredictSquadList();
     renderPredictCVC();
+    populateExtraPredDropdown();
     hd('predict-ld');sh('predict-main');hd('predict-err');
 
     if(deadline) startPredictTimer(deadline);
