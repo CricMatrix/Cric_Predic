@@ -702,14 +702,20 @@ async function loadData(){
   sh('pts-ld');hd('pts-main');hd('pts-err');
   sh('lb-ld');hd('lb-main');hd('lb-err');
   try{
-    const [predTxt,sc]=await Promise.all([
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`).then(r=>r.text()).then(t=>parseCSV(t)),
-      fetchSheet(['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'])
-    ]);
+    /* 1. Fetch Prediction LO first — needed to detect T20/ODI from A45 */
+    const predTxt=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`).then(r=>r.text()).then(t=>parseCSV(t));
     const pred=predTxt;
+
     /* A45 = pred[44][0] — dropdown that says "Scorecard T20" or "Scorecard ODI" */
     _matchFormat=/odi/i.test((pred[44]||[])[0]||'')?'ODI':'T20';
     console.log('[Format] Detected match format:',_matchFormat);
+
+    /* 2. Fetch the SHEET TAB matching the detected format — powers both Scorecard AND Points */
+    const sheetNames=_matchFormat==='ODI'
+      ?['Scorecard ODI','scorecard odi','Scorecard Odi','ScoreCard ODI']
+      :['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'];
+    const sc=await fetchSheet(sheetNames);
+
     renderScorecard(pred,sc);
     renderPredictions(pred.slice(1,21).filter(r=>r.some(c=>c)),pred);
     renderPoints(sc);
