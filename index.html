@@ -530,8 +530,17 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 1: Name -->
       <div class="predict-card">
         <label class="predict-lbl">Your Name</label>
-        <input type="text" id="pf-name" class="predict-input" placeholder="Enter your name" onblur="checkExistingPrediction()"/>
+        <input type="text" id="pf-name" class="predict-input" placeholder="Enter your name"/>
+        <div id="pf-edit-toggle" style="margin-top:10px;">
+          <button type="button" onclick="showEditCodeInput()" style="background:none;border:none;color:#1565c0;font-size:.8rem;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;">✏️ Editing an existing prediction? Click here</button>
+        </div>
+        <div id="pf-edit-code-wrap" style="display:none;margin-top:10px;">
+          <label class="predict-lbl" style="font-size:.75rem;">Your Edit Code</label>
+          <input type="text" id="pf-edit-code" class="predict-input" placeholder="4-digit code from your submission" maxlength="4" inputmode="numeric"/>
+          <button type="button" onclick="checkExistingPrediction()" style="width:100%;margin-top:8px;padding:9px;background:#1565c0;color:#fff;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;">Load My Prediction</button>
+        </div>
         <div id="pf-edit-note" style="display:none;margin-top:8px;padding:8px 10px;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;font-size:.78rem;color:#a8650f;font-weight:600;">✏️ Editing your existing prediction</div>
+        <div id="pf-edit-error" style="display:none;margin-top:8px;padding:8px 10px;background:#ffebee;border:1px solid #ef9a9a;border-radius:6px;font-size:.78rem;color:#c62828;font-weight:600;"></div>
       </div>
 
       <!-- Step 2: Winner -->
@@ -1856,19 +1865,32 @@ function closePredictPreview(){
 /* ── Check for existing prediction by name, pre-fill if found ── */
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyBGjUC0XQOTYcgyA35vbuBYvsVmuS304qk6ES5v0pZZUXK9pZTW8rKhJA8meGQAqVB/exec';
 let _isEditingExisting=false;
+let _currentEditCode='';
+
+function showEditCodeInput(){
+  $('pf-edit-toggle').style.display='none';
+  $('pf-edit-code-wrap').style.display='block';
+}
 
 async function checkExistingPrediction(){
   const name=$('pf-name').value.trim();
-  if(!name)return;
+  const code=$('pf-edit-code').value.trim();
+  const errEl=$('pf-edit-error');
+  errEl.style.display='none';
+
+  if(!name){errEl.textContent='⚠️ Enter your name first';errEl.style.display='block';return;}
+  if(!code){errEl.textContent='⚠️ Enter your edit code';errEl.style.display='block';return;}
 
   try{
-    const res=await fetch(`${APPS_SCRIPT_URL}?name=${encodeURIComponent(name)}`);
+    const res=await fetch(`${APPS_SCRIPT_URL}?name=${encodeURIComponent(name)}&code=${encodeURIComponent(code)}`);
     const result=await res.json();
 
     if(result.found){
       _isEditingExisting=true;
+      _currentEditCode=code;
       $('pf-edit-note').style.display='block';
       $('pf-submit').textContent='Update Prediction';
+      $('pf-edit-code-wrap').style.display='none';
 
       const d=result.data;
       predictState.winner=d.winner||'';
@@ -1888,13 +1910,17 @@ async function checkExistingPrediction(){
       renderPredictWinner();
       renderPredictSquadList();
       renderPredictCVC();
+    }else if(result.wrongCode){
+      errEl.textContent='⚠️ Incorrect edit code for this name.';
+      errEl.style.display='block';
     }else{
-      _isEditingExisting=false;
-      $('pf-edit-note').style.display='none';
-      $('pf-submit').textContent='Submit Prediction';
+      errEl.textContent='⚠️ No prediction found for this name.';
+      errEl.style.display='block';
     }
   }catch(e){
     console.error('Lookup failed:',e);
+    errEl.textContent='⚠️ Could not check — try again.';
+    errEl.style.display='block';
   }
 }
 
@@ -1931,7 +1957,8 @@ async function submitPrediction(){
     captain:predictState.captain,
     vc:predictState.vc,
     extraQ:$('pf-extra-q').value,
-    extraA:extra
+    extraA:extra,
+    editCode:_isEditingExisting?_currentEditCode:''
   };
 
   try{
@@ -1944,14 +1971,25 @@ async function submitPrediction(){
 
     if(result.success){
       statusEl.style.color='#2e7d32';
-      statusEl.textContent=result.updated
+      const codeHtml=result.editCode
+        ?`<div style="margin-top:8px;padding:10px;background:#e8f5e9;border:2px solid #66bb6a;border-radius:8px;">
+            <div style="font-size:.72rem;color:#2e7d32;font-weight:700;letter-spacing:.5px;">YOUR EDIT CODE</div>
+            <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;font-weight:700;color:#1b5e20;letter-spacing:3px;">${result.editCode}</div>
+            <div style="font-size:.7rem;color:#555;">Save this — you'll need it to edit your prediction later</div>
+          </div>`:'';
+      statusEl.innerHTML=(result.updated
         ? '✅ Prediction updated successfully! (Row '+result.row+')'
-        : '✅ Prediction submitted successfully! (Row '+result.row+')';
+        : '✅ Prediction submitted successfully! (Row '+result.row+')')+codeHtml;
       /* Reset form */
       $('pf-name').value='';$('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
+      $('pf-edit-code').value='';
       predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
       _isEditingExisting=false;
+      _currentEditCode='';
       $('pf-edit-note').style.display='none';
+      $('pf-edit-toggle').style.display='block';
+      $('pf-edit-code-wrap').style.display='none';
+      $('pf-edit-error').style.display='none';
       $('pf-submit').textContent='Submit Prediction';
       renderPredictWinner();renderPredictSquadList();renderPredictCVC();
     }else{
