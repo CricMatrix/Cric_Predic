@@ -601,8 +601,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 7: Extra prediction -->
       <div class="predict-card">
         <label class="predict-lbl">Extraordinary Prediction</label>
-        <select id="pf-extra-q" class="predict-input" style="margin-bottom:10px;"></select>
-        <input type="text" id="pf-extra" class="predict-input" placeholder="Your answer (e.g. player or team name)"/>
+        <select id="pf-extra-q" class="predict-input" style="margin-bottom:10px;" onchange="renderExtraAnswerInput()"></select>
+        <div id="pf-extra-answer-wrap"></div>
+        <input type="hidden" id="pf-extra"/>
       </div>
 
       <div class="predict-btn-row">
@@ -1589,11 +1590,97 @@ const EXTRA_PRED_OPTIONS_ODI=[
   "Player of the Match (50)"
 ];
 
+/* Each question's answer type, index-aligned with EXTRA_PRED_OPTIONS_T20 / _ODI
+   (both lists share the same structure/order): */
+const EXTRA_PRED_CATEGORIES=[
+  'team','team','team','team','team','scale','team',
+  'players2','players2',
+  'player1','player1','player1','player1','player1','player1','player1','player1','player1','player1','player1','player1'
+];
+
+function currentExtraOptions(){
+  return _matchFormat==='ODI'?EXTRA_PRED_OPTIONS_ODI:EXTRA_PRED_OPTIONS_T20;
+}
+
+function extraCategoryForCurrentSelection(){
+  const opts=currentExtraOptions();
+  const sel=$('pf-extra-q');
+  const idx=sel?opts.indexOf(sel.value):-1;
+  return idx>=0?(EXTRA_PRED_CATEGORIES[idx]||'player1'):'team';
+}
+
+function combinedPlayerOptionsHtml(){
+  const a=(predictState.squadA||[]).map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  const b=(predictState.squadB||[]).map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  return `<option value="">Select player</option><optgroup label="${esc(predictState.teamA)}">${a}</optgroup><optgroup label="${esc(predictState.teamB)}">${b}</optgroup>`;
+}
+
+function renderExtraAnswerInput(){
+  const cat=extraCategoryForCurrentSelection();
+  const wrap=$('pf-extra-answer-wrap');
+  if(!wrap)return;
+  if(cat==='team'){
+    wrap.innerHTML=`<select id="pf-extra-ans" class="predict-input" onchange="updateExtraFromControls()">
+      <option value="">Select team</option>
+      <option value="${esc(predictState.teamA)}">${esc(predictState.teamA)}</option>
+      <option value="${esc(predictState.teamB)}">${esc(predictState.teamB)}</option>
+    </select>`;
+  }else if(cat==='scale'){
+    let o='<option value="">Select no. of wickets</option>';
+    for(let i=1;i<=10;i++)o+=`<option value="${i}">${i}</option>`;
+    wrap.innerHTML=`<select id="pf-extra-ans" class="predict-input" onchange="updateExtraFromControls()">${o}</select>`;
+  }else if(cat==='players2'){
+    wrap.innerHTML=`
+      <select id="pf-extra-ans1" class="predict-input" style="margin-bottom:8px" onchange="updateExtraFromControls()">${combinedPlayerOptionsHtml()}</select>
+      <select id="pf-extra-ans2" class="predict-input" onchange="updateExtraFromControls()">${combinedPlayerOptionsHtml()}</select>
+      <div id="pf-extra-p2-err" style="display:none;color:#c62828;font-size:.72rem;margin-top:4px;">⚠️ Pick two different players</div>`;
+  }else{
+    wrap.innerHTML=`<select id="pf-extra-ans" class="predict-input" onchange="updateExtraFromControls()">${combinedPlayerOptionsHtml()}</select>`;
+  }
+  updateExtraFromControls();
+}
+
+function updateExtraFromControls(){
+  const cat=extraCategoryForCurrentSelection();
+  const hidden=$('pf-extra');
+  if(!hidden)return;
+  const errEl=$('pf-extra-p2-err');
+  if(cat==='players2'){
+    const v1=$('pf-extra-ans1')?$('pf-extra-ans1').value:'';
+    const v2=$('pf-extra-ans2')?$('pf-extra-ans2').value:'';
+    if(v1&&v2&&v1===v2){
+      if(errEl)errEl.style.display='block';
+      hidden.value='';
+      return;
+    }
+    if(errEl)errEl.style.display='none';
+    hidden.value=(v1&&v2)?`${v1}, ${v2}`:'';
+  }else{
+    const el=$('pf-extra-ans');
+    hidden.value=el?el.value:'';
+  }
+}
+
+/* Used when loading an existing prediction for editing — pushes the saved
+   answer text back into whichever controls are currently rendered. */
+function setExtraAnswerValue(val){
+  const cat=extraCategoryForCurrentSelection();
+  if(val&&cat==='players2'){
+    const parts=val.split(',').map(s=>s.trim()).filter(Boolean);
+    if($('pf-extra-ans1'))$('pf-extra-ans1').value=parts[0]||'';
+    if($('pf-extra-ans2'))$('pf-extra-ans2').value=parts[1]||'';
+  }else if(val&&$('pf-extra-ans')){
+    $('pf-extra-ans').value=val;
+  }
+  updateExtraFromControls();
+}
+
 function populateExtraPredDropdown(){
   const sel=$('pf-extra-q');
   if(!sel)return;
-  const opts=_matchFormat==='ODI'?EXTRA_PRED_OPTIONS_ODI:EXTRA_PRED_OPTIONS_T20;
+  const opts=currentExtraOptions();
   sel.innerHTML=opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${esc(o)}</option>`).join('');
+  renderExtraAnswerInput();
 }
 
 let predictState={teamA:'',teamB:'',squadA:[],squadB:[],winner:'',selectedPlayers:[],captain:'',vc:''};
@@ -1940,8 +2027,9 @@ async function checkExistingPrediction(){
       predictState.winner=d.winner||'';
       $('pf-inn1').value=d.inn1||'';
       $('pf-inn2').value=d.inn2||'';
-      $('pf-extra').value=d.extraA||'';
       if(d.extraQ)$('pf-extra-q').value=d.extraQ;
+      renderExtraAnswerInput();
+      setExtraAnswerValue(d.extraA||'');
 
       /* Rebuild 7 selected players = 5 normal + captain + vc */
       const normals=[d.player1,d.player2,d.player3,d.player4,d.player5].filter(Boolean);
@@ -1982,6 +2070,7 @@ async function submitPrediction(){
   if(predictState.selectedPlayers.length!==7){statusEl.textContent='⚠️ Please select exactly 7 players';statusEl.style.color='#c62828';return;}
   if(!predictState.captain){statusEl.textContent='⚠️ Please pick a Captain';statusEl.style.color='#c62828';return;}
   if(!predictState.vc){statusEl.textContent='⚠️ Please pick a Vice-Captain';statusEl.style.color='#c62828';return;}
+  if($('pf-extra-q').value&&!extra){statusEl.textContent='⚠️ Please complete your Extraordinary Prediction answer';statusEl.style.color='#c62828';return;}
 
   /* The 5 "normal" player slots = the 7 selected, minus whichever 2 are Captain/VC */
   const normalPlayers=predictState.selectedPlayers.filter(p=>p!==predictState.captain&&p!==predictState.vc);
