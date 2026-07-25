@@ -435,11 +435,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
     </div>
   </div>
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('sc',this)">Scorecard</div>
-    <div class="tab" onclick="switchTab('pred',this)">Predictions</div>
-    <div class="tab" onclick="switchTab('pts',this)">Points</div>
-    <div class="tab" onclick="switchTab('lb',this)">Leaderboard</div>
-    <div class="tab" onclick="switchTab('predict',this)">Predict</div>
+    <div class="tab active" id="tab-btn-sc" onclick="switchTab('sc',this)">Scorecard</div>
+    <div class="tab" id="tab-btn-pred" onclick="switchTab('pred',this)">Predictions</div>
+    <div class="tab" id="tab-btn-pts" onclick="switchTab('pts',this)">Points</div>
+    <div class="tab" id="tab-btn-lb" onclick="switchTab('lb',this)">Leaderboard</div>
+    <div class="tab" id="tab-btn-predict" onclick="switchTab('predict',this)">Predict</div>
   </div>
 </div>
 <div class="content">
@@ -536,11 +536,6 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
     <div id="predict-main" style="display:none">
       <div class="sh"><span class="sh-t">🎯 Make Your Prediction</span></div>
       <div id="predict-timer-box" style="display:none"></div>
-
-      <div id="pf-device-lock-banner" style="display:none;margin:0 0 12px;padding:10px 12px;background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;font-size:.8rem;color:#0d47a1;">
-        <div id="pf-device-lock-text" style="font-weight:600;margin-bottom:4px;"></div>
-        <button type="button" onclick="clearDeviceLockAndReset()" style="background:none;border:none;color:#1565c0;font-size:.76rem;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;">Not you? Tap here to predict fresh</button>
-      </div>
 
       <!-- Step 1: Name -->
       <div class="predict-card">
@@ -720,46 +715,82 @@ function switchInnings(n){
 }
 
 /* ── LOAD ── */
-async function loadData(){
-  /* no manual refresh button anymore — auto-sync only */
+/* ── SHARED DATA CACHE ──
+   Prediction LO (pred) and the format-specific Scorecard sheet (sc) are
+   needed by more than one tab, so they're fetched once and cached; each
+   tab only fetches what it actually needs, on first visit to that tab. */
+let _predCache=null;
+
+async function ensurePredData(){
+  if(_predCache)return _predCache;
+  const predTxt=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`).then(r=>r.text()).then(t=>parseCSV(t));
+  /* A45 = pred[44][0] — dropdown that says "Scorecard T20" or "Scorecard ODI" */
+  _matchFormat=/odi/i.test((predTxt[44]||[])[0]||'')?'ODI':'T20';
+  console.log('[Format] Detected match format:',_matchFormat);
+  _predCache=predTxt;
+  return _predCache;
+}
+
+async function ensureScData(){
+  if(_scCache)return _scCache;
+  await ensurePredData();
+  const sheetNames=_matchFormat==='ODI'
+    ?['Scorecard ODI','scorecard odi','Scorecard Odi','ScoreCard ODI']
+    :['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'];
+  _scCache=await fetchSheet(sheetNames);
+  return _scCache;
+}
+
+function invalidateSharedCache(){_predCache=null;_scCache=null;}
+
+async function loadScorecardTab(){
   sh('sc-ld');hd('sc-main');hd('sc-err');
-  sh('pred-ld');hd('pred-main');hd('pred-err');
-  sh('pts-ld');hd('pts-main');hd('pts-err');
-  sh('lb-ld');hd('lb-main');hd('lb-err');
   try{
-    /* 1. Fetch Prediction LO first — needed to detect T20/ODI from A45 */
-    const predTxt=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`).then(r=>r.text()).then(t=>parseCSV(t));
-    const pred=predTxt;
-
-    /* A45 = pred[44][0] — dropdown that says "Scorecard T20" or "Scorecard ODI" */
-    _matchFormat=/odi/i.test((pred[44]||[])[0]||'')?'ODI':'T20';
-    console.log('[Format] Detected match format:',_matchFormat);
-
-    /* 2. Fetch the SHEET TAB matching the detected format — powers both Scorecard AND Points */
-    const sheetNames=_matchFormat==='ODI'
-      ?['Scorecard ODI','scorecard odi','Scorecard Odi','ScoreCard ODI']
-      :['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'];
-    const sc=await fetchSheet(sheetNames);
-
+    const pred=await ensurePredData();
+    const sc=await ensureScData();
     renderScorecard(pred,sc);
-    renderPredictions(pred.slice(1,21).filter(r=>r.some(c=>c)),pred);
-    renderPoints(sc);
+    hd('sc-ld');sh('sc-main');hd('sc-err');
   }catch(e){
     console.error(e);
     hd('sc-ld');hd('sc-main');sh('sc-err');
     $('sc-err-p').textContent='Error: '+e.message;
+  }
+}
+
+async function loadPredictionsTab(){
+  sh('pred-ld');hd('pred-main');hd('pred-err');
+  try{
+    const pred=await ensurePredData();
+    renderPredictions(pred.slice(1,21).filter(r=>r.some(c=>c)),pred);
+    hd('pred-ld');sh('pred-main');hd('pred-err');
+  }catch(e){
+    console.error(e);
     hd('pred-ld');hd('pred-main');sh('pred-err');
+  }
+}
+
+async function loadPointsTab(){
+  sh('pts-ld');hd('pts-main');hd('pts-err');
+  try{
+    const sc=await ensureScData();
+    renderPoints(sc);
+    hd('pts-ld');sh('pts-main');hd('pts-err');
+  }catch(e){
+    console.error(e);
     hd('pts-ld');hd('pts-main');sh('pts-err');
   }
+}
 
+async function loadLeaderboardTab(){
+  sh('lb-ld');hd('lb-main');hd('lb-err');
   try{
     const lb=await fetchSheetByGid(1532066055);
     renderLeaderboard(lb);
+    hd('lb-ld');sh('lb-main');hd('lb-err');
   }catch(e){
     console.error(e);
     hd('lb-ld');hd('lb-main');sh('lb-err');
   }
-
 }
 
 /* ── SCORECARD ── */
@@ -1701,49 +1732,21 @@ async function fetchSheetByGidDirect(gid){
   return parseCSV(t);
 }
 
-/* ── DEVICE LOCK ── stops one phone/browser from submitting under
-   multiple different names. Soft deterrent, not airtight security:
-   incognito mode or clearing site data resets it — but that friction
-   is enough to stop casual repeat submissions from the same device. */
-const DEVICE_LOCK_KEY='mpl_device_prediction';
-function getDeviceLock(){
-  try{const raw=localStorage.getItem(DEVICE_LOCK_KEY);return raw?JSON.parse(raw):null;}
-  catch(e){return null;}
-}
-function setDeviceLock(name,code){
-  try{localStorage.setItem(DEVICE_LOCK_KEY,JSON.stringify({name,code,ts:Date.now()}));}catch(e){}
-}
-function clearDeviceLock(){
-  try{localStorage.removeItem(DEVICE_LOCK_KEY);}catch(e){}
-}
-function lockNameField(name){
-  $('pf-device-lock-text').textContent=`📱 This device already submitted a prediction, as "${name}". Loaded below for editing.`;
-  $('pf-device-lock-banner').style.display='block';
-  $('pf-name').value=name;
-  $('pf-name').readOnly=true;
-  $('pf-name').style.background='#f5f5f5';
-  $('pf-edit-toggle').style.display='none';
-  $('pf-edit-code-wrap').style.display='none';
-}
-function unlockNameField(){
-  $('pf-device-lock-banner').style.display='none';
-  $('pf-name').readOnly=false;
-  $('pf-name').style.background='';
-  $('pf-edit-toggle').style.display='block';
-}
-function clearDeviceLockAndReset(){
-  clearDeviceLock();
-  unlockNameField();
-  $('pf-name').value='';
-  $('pf-edit-code').value='';
-  _isEditingExisting=false;_currentEditCode='';
-  $('pf-edit-note').style.display='none';
-  $('pf-edit-error').style.display='none';
-  $('pf-submit').textContent='Submit Prediction';
-  predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
-  $('pf-inn1').value='';$('pf-inn2').value='';
-  renderPredictWinner();renderPredictSquadList();renderPredictCVC();
-  populateExtraPredDropdown();
+/* Parse deadline — anchor to IST (+05:30) so it's the SAME moment
+   for every visitor worldwide, not relative to their local device clock.
+   Accepts: "2026-07-10T18:30:00+05:30" (preferred) or plain "2026-07-10 18:30"
+   (legacy format — auto-assumed to be IST for backward compatibility). */
+function parseDeadlineStr(deadlineStr){
+  if(!deadlineStr||!deadlineStr.trim())return null;
+  let raw=deadlineStr.trim();
+  let d;
+  if(/[+-]\d{2}:\d{2}$/.test(raw)||/Z$/.test(raw)){
+    d=new Date(raw.replace(' ','T'));
+  }else{
+    const isoLike=raw.replace(' ','T');
+    d=new Date(isoLike.length===16?isoLike+':00+05:30':isoLike+'+05:30');
+  }
+  return isNaN(d)?null:d;
 }
 
 async function loadPredictTab(){
@@ -1762,24 +1765,7 @@ async function loadPredictTab(){
     predictState.squadA=squadA;predictState.squadB=squadB;
     predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';predictState.winner='';
 
-    /* Parse deadline — anchor to IST (+05:30) so it's the SAME moment
-       for every visitor worldwide, not relative to their local device clock.
-       Accepts: "2026-07-10T18:30:00+05:30" (preferred) or plain "2026-07-10 18:30"
-       (legacy format — auto-assumed to be IST for backward compatibility). */
-    let deadline=null;
-    if(deadlineStr.trim()){
-      let raw=deadlineStr.trim();
-      let d;
-      if(/[+-]\d{2}:\d{2}$/.test(raw)||/Z$/.test(raw)){
-        /* Already has explicit timezone/offset — parse as-is */
-        d=new Date(raw.replace(' ','T'));
-      }else{
-        /* No timezone given — assume IST (+05:30) explicitly */
-        const isoLike=raw.replace(' ','T');
-        d=new Date(isoLike.length===16?isoLike+':00+05:30':isoLike+'+05:30');
-      }
-      if(!isNaN(d)) deadline=d;
-    }
+    const deadline=parseDeadlineStr(deadlineStr);
 
     if(deadline&&new Date()>deadline){
       showPredictClosed(deadline);
@@ -1802,13 +1788,6 @@ async function loadPredictTab(){
     renderPredictCVC();
     populateExtraPredDropdown();
     hd('predict-ld');sh('predict-main');hd('predict-err');
-
-    const lock=getDeviceLock();
-    if(lock&&lock.name&&lock.code){
-      lockNameField(lock.name);
-      $('pf-edit-code').value=lock.code;
-      checkExistingPrediction();
-    }
 
     if(deadline) startPredictTimer(deadline);
 
@@ -1862,6 +1841,36 @@ function showPredictClosed(deadline){
       <div class="predict-closed-sub">The submission deadline for this match has passed.</div>
       <div class="predict-closed-time">Deadline was: ${deadline.toLocaleString([],{dateStyle:'medium',timeStyle:'short'})}</div>
     </div>`;
+}
+
+/* ── Auto-hide the "Predict" nav tab 5 minutes after the deadline ──
+   Checked once on page load, and (if the deadline is still ahead) scheduled
+   to fire live via setTimeout in case someone's already on the page. */
+const PREDICT_TAB_HIDE_GRACE_MS=5*60*1000;
+let _predictHideTimeout=null;
+
+function hidePredictTabButton(){
+  const btn=$('tab-btn-predict');
+  if(btn)btn.style.display='none';
+  /* If someone's actively on the Predict tab when it disappears, bounce them to Scorecard */
+  if(activeTabName()==='predict')switchTab('sc',$('tab-btn-sc'));
+}
+
+async function checkPredictTabVisibility(){
+  try{
+    const rows=await fetchSheetByGidDirect(638993616);
+    const deadline=parseDeadlineStr((rows[0]||[])[7]||'');
+    if(!deadline)return; /* no deadline set on Bilateral H1 — leave tab visible */
+    const hideAt=deadline.getTime()+PREDICT_TAB_HIDE_GRACE_MS;
+    const now=Date.now();
+    if(now>=hideAt){
+      hidePredictTabButton();
+    }else if(_predictHideTimeout===null){
+      _predictHideTimeout=setTimeout(hidePredictTabButton,hideAt-now);
+    }
+  }catch(e){
+    console.error('[Predict tab visibility check]',e);
+  }
 }
 
 function renderPredictWinner(){
@@ -2161,7 +2170,6 @@ async function submitPrediction(){
 
     if(result.success){
       statusEl.style.color='#2e7d32';
-      const codeToStore=result.editCode||_currentEditCode;
       const codeHtml=result.editCode
         ?`<div style="margin-top:8px;padding:10px;background:#e8f5e9;border:2px solid #66bb6a;border-radius:8px;">
             <div style="font-size:.72rem;color:#2e7d32;font-weight:700;letter-spacing:.5px;">YOUR EDIT CODE</div>
@@ -2171,20 +2179,18 @@ async function submitPrediction(){
       statusEl.innerHTML=(result.updated
         ? '✅ Prediction updated successfully! (Row '+result.row+')'
         : '✅ Prediction submitted successfully! (Row '+result.row+')')+codeHtml;
-      /* Lock this device to the submitted name (soft deterrent against
-         repeat submissions), reset the rest of the form for a clean look */
-      setDeviceLock(name,codeToStore);
-      lockNameField(name);
-      $('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
-      $('pf-edit-code').value=codeToStore;
+      /* Reset form */
+      $('pf-name').value='';$('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
+      $('pf-edit-code').value='';
       predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
-      _isEditingExisting=true;
-      _currentEditCode=codeToStore;
+      _isEditingExisting=false;
+      _currentEditCode='';
       $('pf-edit-note').style.display='none';
+      $('pf-edit-toggle').style.display='block';
+      $('pf-edit-code-wrap').style.display='none';
       $('pf-edit-error').style.display='none';
-      $('pf-submit').textContent='Update Prediction';
+      $('pf-submit').textContent='Submit Prediction';
       renderPredictWinner();renderPredictSquadList();renderPredictCVC();
-      populateExtraPredDropdown();
     }else{
       statusEl.style.color='#c62828';
       statusEl.textContent='⚠️ '+(result.message||'Submission failed.');
@@ -2197,20 +2203,45 @@ async function submitPrediction(){
   btn.disabled=false;btn.textContent='Submit Prediction';
 }
 
-let _predictLoaded=false;
+let _tabLoaded={sc:false,pred:false,pts:false,lb:false,predict:false};
 function switchTab(name,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
   $('tab-'+name).classList.add('active');
-  if(name==='predict'&&!_predictLoaded){
-    _predictLoaded=true;
-    loadPredictTab();
-  }
+  if(_tabLoaded[name])return;
+  _tabLoaded[name]=true;
+  if(name==='sc')loadScorecardTab();
+  else if(name==='pred')loadPredictionsTab();
+  else if(name==='pts')loadPointsTab();
+  else if(name==='lb')loadLeaderboardTab();
+  else if(name==='predict')loadPredictTab();
 }
 
-loadData();
-setInterval(loadData,15*60*1000);
+function activeTabName(){
+  const active=document.querySelector('.tab-panel.active');
+  return active?active.id.replace('tab-',''):'sc';
+}
+
+/* Only the tab currently open gets refreshed on the auto-sync interval —
+   others just re-fetch next time the user switches to them. */
+function refreshActiveTab(){
+  const name=activeTabName();
+  invalidateSharedCache();
+  _tabLoaded={sc:false,pred:false,pts:false,lb:false,predict:_tabLoaded.predict};
+  _tabLoaded[name]=true;
+  if(name==='sc')loadScorecardTab();
+  else if(name==='pred')loadPredictionsTab();
+  else if(name==='pts')loadPointsTab();
+  else if(name==='lb')loadLeaderboardTab();
+  else if(name==='predict'){/* predict tab manages its own refresh/deadline */}
+}
+
+/* Load only the default-visible tab (Scorecard) up front */
+_tabLoaded.sc=true;
+loadScorecardTab();
+checkPredictTabVisibility();
+setInterval(()=>{refreshActiveTab();checkPredictTabVisibility();},15*60*1000);
 </script>
 
 <!-- Prediction field modal -->
