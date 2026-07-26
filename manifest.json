@@ -8,10 +8,6 @@
   "background_color": "#f5f5f5",
   "theme_color": "#1a237e",
   "icons": [
-    { "src": "logo.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any" }
-  ],
-  "screenshots": [
-    { "src": "screenshot-wide.png", "sizes": "1917x913", "type": "image/png", "form_factor": "wide" },
-    { "src": "screenshot-mobile.png", "sizes": "1084x2412", "type": "image/png", "form_factor": "narrow" }
+    { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }
