@@ -131,11 +131,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .row-notout{background:#f1f8e9}
 .sc-tbl tbody tr.dismiss-row td{padding-top:1px;padding-bottom:5px;font-style:italic;color:#757575;font-size:.72rem;font-family:'Barlow Condensed',sans-serif;border-bottom:1px solid #f0f0f0;}
 .sc-tbl tbody tr.dismiss-row td:not(:first-child){color:transparent}
-.match-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
-@media(max-width:480px){.match-info-grid{grid-template-columns:1fr;}}
-.mi-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:11px 14px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-.mi-card-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9e9e9e;margin-bottom:3px;}
-.mi-card-val{font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:600;color:#212121;line-height:1.3;}
+.match-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px 14px;margin-top:4px;}
+@media(max-width:380px){.match-info-grid{grid-template-columns:1fr;}}
+.mi-card{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.mi-card-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9e9e9e;white-space:nowrap;}
+.mi-card-val{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:600;color:#212121;text-align:right;line-height:1.3;}
 .live-box{background:#fff;border:1px solid #c8e6c9;border-radius:10px;overflow:hidden;margin:0 0 12px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .live-title{background:#e8f5e9;border-bottom:1px solid #c8e6c9;padding:5px 12px;font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#2e7d32;display:flex;align-items:center;gap:6px;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#4caf50;animation:pulse 1.2s ease-in-out infinite;flex-shrink:0}
