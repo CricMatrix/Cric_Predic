@@ -485,30 +485,32 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
         <div class="live-title"><div class="live-dot"></div>Live</div>
         <div class="live-tbl-wrap"><table class="live-tbl" id="live-tbl"></table></div>
       </div>
-      <div class="hero-tabs-card">
-        <div class="hero-tabs">
-          <div class="hero-tab active" id="hero-tab1" onclick="switchInnings(1)">1st Innings</div>
-          <div class="hero-tab" id="hero-tab2" onclick="switchInnings(2)">2nd Innings</div>
+      <div id="sc-full-block">
+        <div class="hero-tabs-card">
+          <div class="hero-tabs">
+            <div class="hero-tab active" id="hero-tab1" onclick="switchInnings(1)">1st Innings</div>
+            <div class="hero-tab" id="hero-tab2" onclick="switchInnings(2)">2nd Innings</div>
+          </div>
         </div>
-      </div>
-      <div class="innings-panel active" id="inn1">
-        <div class="sc-section">
-          <div class="sc-sec-title">🏏 Batting</div>
-          <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn1-bat"></table></div>
+        <div class="innings-panel active" id="inn1">
+          <div class="sc-section">
+            <div class="sc-sec-title">🏏 Batting</div>
+            <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn1-bat"></table></div>
+          </div>
+          <div class="sc-section">
+            <div class="sc-sec-title">⚾ Bowling</div>
+            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bowl"></table></div>
+          </div>
         </div>
-        <div class="sc-section">
-          <div class="sc-sec-title">⚾ Bowling</div>
-          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn1-bowl"></table></div>
-        </div>
-      </div>
-      <div class="innings-panel" id="inn2">
-        <div class="sc-section">
-          <div class="sc-sec-title">🏏 Batting</div>
-          <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn2-bat"></table></div>
-        </div>
-        <div class="sc-section">
-          <div class="sc-sec-title">⚾ Bowling</div>
-          <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bowl"></table></div>
+        <div class="innings-panel" id="inn2">
+          <div class="sc-section">
+            <div class="sc-sec-title">🏏 Batting</div>
+            <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn2-bat"></table></div>
+          </div>
+          <div class="sc-section">
+            <div class="sc-sec-title">⚾ Bowling</div>
+            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bowl"></table></div>
+          </div>
         </div>
       </div>
       <!-- Match Info section -->
@@ -837,6 +839,24 @@ function renderScorecard(pred,sc){
   $('score-t1-sc').textContent=i1score||'';
   $('score-t2-nm').innerHTML=i2team?teamLink(i2team):'Team 2';
   $('score-t2-sc').textContent=i2score||'';
+
+  /* Nothing has happened yet (both innings still at 0 or blank) —
+     show Match Info only, skip the live box + empty scorecard tables */
+  const scoreIsZero=s=>{
+    if(!s||!s.trim())return true;
+    const m=s.trim().match(/^(\d+)/);
+    return !m||parseInt(m[1],10)===0;
+  };
+  const matchNotStarted=scoreIsZero(i1score)&&scoreIsZero(i2score);
+
+  if(matchNotStarted){
+    hd('live-box');
+    hd('sc-full-block');
+    renderMatchInfo(sc);
+    hd('sc-ld');sh('sc-main');hd('sc-err');
+    return;
+  }
+  sh('sc-full-block');
 
   const inn2BatData=rng(sc,1,30,43,48);
   const inn2HasData=inn2BatData.some(r=>r.some(c=>c));
