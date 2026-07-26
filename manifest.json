@@ -1,12 +1,12 @@
 {
-  "name": "MPL",
-  "short_name": "MPL",
+  "name": "Cricmatrix",
+  "short_name": "Cricmatrix",
   "start_url": ".",
-  "scope": ".", 
+  "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5f5f5",
-  "theme_color": "#1a237e",
+  "theme_color": "#ffffff",
   "icons": [
     { "src": "logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
