@@ -2,7 +2,7 @@
   "name": "MPL",
   "short_name": "MPL",
   "start_url": ".",
-  "scope": ".",
+  "scope": ".", 
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5f5f5",
