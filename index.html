@@ -502,6 +502,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
           <div class="hero-tabs">
             <div class="hero-tab active" id="hero-tab1" onclick="switchInnings(1)">1st Innings</div>
             <div class="hero-tab" id="hero-tab2" onclick="switchInnings(2)">2nd Innings</div>
+            <div class="hero-tab" id="hero-tab3" onclick="switchInnings(3)" style="display:none">3rd Innings</div>
+            <div class="hero-tab" id="hero-tab4" onclick="switchInnings(4)" style="display:none">4th Innings</div>
           </div>
         </div>
         <div class="innings-panel active" id="inn1">
@@ -522,6 +524,26 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
           <div class="sc-section">
             <div class="sc-sec-title">⚾ Bowling</div>
             <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn2-bowl"></table></div>
+          </div>
+        </div>
+        <div class="innings-panel" id="inn3">
+          <div class="sc-section">
+            <div class="sc-sec-title">🏏 Batting</div>
+            <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn3-bat"></table></div>
+          </div>
+          <div class="sc-section">
+            <div class="sc-sec-title">⚾ Bowling</div>
+            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn3-bowl"></table></div>
+          </div>
+        </div>
+        <div class="innings-panel" id="inn4">
+          <div class="sc-section">
+            <div class="sc-sec-title">🏏 Batting</div>
+            <div class="sc-tbl-wrap bat-scroll"><table class="sc-tbl" id="inn4-bat"></table></div>
+          </div>
+          <div class="sc-section">
+            <div class="sc-sec-title">⚾ Bowling</div>
+            <div class="sc-tbl-wrap"><table class="sc-tbl" id="inn4-bowl"></table></div>
           </div>
         </div>
       </div>
@@ -601,6 +623,14 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="predict-card">
         <label class="predict-lbl">2nd Innings Score</label>
         <input type="number" id="pf-inn2" class="predict-input" placeholder="e.g. 170"/>
+      </div>
+      <div class="predict-card" id="pf-inn3-card" style="display:none">
+        <label class="predict-lbl">3rd Innings Score</label>
+        <input type="number" id="pf-inn3" class="predict-input" placeholder="e.g. 180"/>
+      </div>
+      <div class="predict-card" id="pf-inn4-card" style="display:none">
+        <label class="predict-lbl">4th Innings Score</label>
+        <input type="number" id="pf-inn4" class="predict-input" placeholder="e.g. 120"/>
       </div>
 
       <!-- Step 4: Player picker -->
@@ -740,12 +770,13 @@ function splitTeamScore(text){
   return {name:text.trim(), score:''};
 }
 
-/* Tab switcher for 1st/2nd innings panels */
+/* Tab switcher for 1st/2nd/3rd/4th innings panels */
 function switchInnings(n){
-  document.getElementById('hero-tab1').classList.toggle('active', n===1);
-  document.getElementById('hero-tab2').classList.toggle('active', n===2);
-  document.getElementById('inn1').classList.toggle('active', n===1);
-  document.getElementById('inn2').classList.toggle('active', n===2);
+  for(let i=1;i<=4;i++){
+    const tab=document.getElementById('hero-tab'+i), panel=document.getElementById('inn'+i);
+    if(tab)tab.classList.toggle('active', n===i);
+    if(panel)panel.classList.toggle('active', n===i);
+  }
 }
 
 /* ── LOAD ── */
@@ -758,8 +789,9 @@ let _predCache=null;
 async function ensurePredData(){
   if(_predCache)return _predCache;
   const predTxt=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`).then(r=>r.text()).then(t=>parseCSV(t));
-  /* A45 = pred[44][0] — dropdown that says "Scorecard T20" or "Scorecard ODI" */
-  _matchFormat=/odi/i.test((predTxt[44]||[])[0]||'')?'ODI':'T20';
+  /* A45 = pred[44][0] — dropdown that says "Scorecard T20", "Scorecard ODI" or "Scorecard Test" */
+  const fmtVal=(predTxt[44]||[])[0]||'';
+  _matchFormat=/test/i.test(fmtVal)?'Test':/odi/i.test(fmtVal)?'ODI':'T20';
   console.log('[Format] Detected match format:',_matchFormat);
   _predCache=predTxt;
   return _predCache;
@@ -768,7 +800,9 @@ async function ensurePredData(){
 async function ensureScData(){
   if(_scCache)return _scCache;
   await ensurePredData();
-  const sheetNames=_matchFormat==='ODI'
+  const sheetNames=_matchFormat==='Test'
+    ?['Scorecard Test','scorecard test','Scorecard test','ScoreCard Test']
+    :_matchFormat==='ODI'
     ?['Scorecard ODI','scorecard odi','Scorecard Odi','ScoreCard ODI']
     :['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'];
   _scCache=await fetchSheet(sheetNames);
@@ -831,8 +865,8 @@ async function loadLeaderboardTab(){
 function renderScorecard(pred,sc){
   _scCache=sc; /* store for player detail popup */
   const fixture=(pred[21]||[])[0]||'';
-  const venue  =(pred[22]||[])[12]||'';
-  const rr     =(pred[22]||[])[8]||'';
+  const venue  =(pred[22]||[])[14]||'';  /* was col12 — shifted +2 by the 3rd/4th Inn. Score columns added to Prediction LO */
+  const rr     =(pred[22]||[])[10]||''; /* was col8 — shifted +2, same reason */
   const result =cel(sc,3,89);
   $('mi-fixture').textContent=fixture||'Match';
   /* venue moved to Match Info section below live stats */
@@ -842,7 +876,7 @@ function renderScorecard(pred,sc){
   else{miResult.style.display='none';}
 
   const i1team =cel(sc,1,89);  /* CH3 */
-  const i1score=cel(sc,1,90);  /* CI3 */
+  const i1score=cel(sc,1,90);  /* CI3 — for Test matches this is a combined "245 & 178/4" string */
   const i2team =cel(sc,2,89);  /* CH4 */
   const i2score=cel(sc,2,90);  /* CI4 */
 
@@ -870,6 +904,7 @@ function renderScorecard(pred,sc){
   }
   sh('sc-full-block');
 
+  const isTest=_matchFormat==='Test';
   const inn2BatData=rng(sc,1,30,43,48);
   const inn2HasData=inn2BatData.some(r=>r.some(c=>c));
 
@@ -880,8 +915,28 @@ function renderScorecard(pred,sc){
   buildLive(rng(sc,35,41,2,7));
   renderMatchInfo(sc);
 
-  /* Auto-select 2nd innings if it has data, else stay on 1st */
-  switchInnings(inn2HasData?2:1);
+  /* 3rd/4th innings tabs + tables only apply to Test matches */
+  const tab3=$('hero-tab3'), tab4=$('hero-tab4');
+  let inn3HasData=false, inn4HasData=false;
+  if(isTest){
+    const inn3BatData=rng(sc,1,30,104,109);
+    const inn4BatData=rng(sc,1,30,135,140);
+    inn3HasData=inn3BatData.some(r=>r.some(c=>c));
+    inn4HasData=inn4BatData.some(r=>r.some(c=>c));
+    buildBatTable('inn3-bat', inn3BatData);
+    buildBatTable('inn4-bat', inn4BatData);
+    buildBowlTable('inn3-bowl',rng(sc,1,11,121,127));
+    buildBowlTable('inn4-bowl',rng(sc,1,11,152,158));
+    if(tab3)tab3.style.display='';
+    if(tab4)tab4.style.display='';
+  }else{
+    if(tab3)tab3.style.display='none';
+    if(tab4)tab4.style.display='none';
+  }
+
+  /* Auto-select the furthest innings that has data, else stay on 1st */
+  const activeInn=inn4HasData?4:inn3HasData?3:inn2HasData?2:1;
+  switchInnings(activeInn);
 
   hd('sc-ld');sh('sc-main');hd('sc-err');
 }
@@ -1152,10 +1207,12 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const winnerVal=(pred[2]||'').trim(), winnerPts=n0(ptsRow[2]);
   const inn1Val=(pred[3]||'').trim(),   inn1Pts=n0(ptsRow[3]);
   const inn2Val=(pred[4]||'').trim(),   inn2Pts=n0(ptsRow[4]);
-  const players=[5,6,7,8,9].map(c=>({val:(pred[c]||'').trim(),pts:n0(ptsRow[c])}));
-  const capVal=(pred[10]||'').trim(),  capPts=n0(ptsRow[10]);
-  const vcVal=(pred[11]||'').trim(),   vcPts=n0(ptsRow[11]);
-  const eQ=(pred[12]||'').trim(), eA=(pred[13]||'').trim(), ePts=n0(ptsRow[12]);
+  const inn3Val=(pred[5]||'').trim(),   inn3Pts=n0(ptsRow[5]);  /* Test matches only */
+  const inn4Val=(pred[6]||'').trim(),   inn4Pts=n0(ptsRow[6]);  /* Test matches only */
+  const players=[7,8,9,10,11].map(c=>({val:(pred[c]||'').trim(),pts:n0(ptsRow[c])}));
+  const capVal=(pred[12]||'').trim(),  capPts=n0(ptsRow[12]);
+  const vcVal=(pred[13]||'').trim(),   vcPts=n0(ptsRow[13]);
+  const eQ=(pred[14]||'').trim(), eA=(pred[15]||'').trim(), ePts=n0(ptsRow[14]);
 
   const zeroCls=(pts)=>pts<=0?' zero':'';
   const ptsHtml=(pts)=>`<span class="field-pts${zeroCls(pts)}">${fmt(pts)} PTS</span>`;
@@ -1196,6 +1253,10 @@ function buildPredCard(e,displayRank,isWinner,idx){
           ${statHtml('1st Innings',inn1Val,inn1Pts)}
           ${statHtml('2nd Innings',inn2Val,inn2Pts)}
         </div>
+        ${(inn3Val||inn4Val)?`<div class="field-row">
+          ${statHtml('3rd Innings',inn3Val,inn3Pts)}
+          ${statHtml('4th Innings',inn4Val,inn4Pts)}
+        </div>`:''}
 
         <div class="field-divider"></div>
 
@@ -1839,6 +1900,14 @@ async function loadPredictTab(){
     renderPredictSquadList();
     renderPredictCVC();
     populateExtraPredDropdown();
+
+    /* 3rd/4th innings score inputs only apply to Test matches */
+    await ensurePredData();
+    const isTest=_matchFormat==='Test';
+    const inn3Card=$('pf-inn3-card'), inn4Card=$('pf-inn4-card');
+    if(inn3Card)inn3Card.style.display=isTest?'':'none';
+    if(inn4Card)inn4Card.style.display=isTest?'':'none';
+
     hd('predict-ld');sh('predict-main');hd('predict-err');
 
     if(deadline) startPredictTimer(deadline);
@@ -2046,6 +2115,8 @@ function openPredictPreview(){
   const winnerVal=predictState.winner;
   const inn1Val=($('pf-inn1').value||'').trim();
   const inn2Val=($('pf-inn2').value||'').trim();
+  const inn3Val=$('pf-inn3')?($('pf-inn3').value||'').trim():'';
+  const inn4Val=$('pf-inn4')?($('pf-inn4').value||'').trim():'';
   const normalPlayers=predictState.selectedPlayers.filter(p=>p!==predictState.captain&&p!==predictState.vc);
   const capVal=predictState.captain;
   const vcVal=predictState.vc;
@@ -2081,6 +2152,10 @@ function openPredictPreview(){
           ${statHtml('1st Innings',inn1Val)}
           ${statHtml('2nd Innings',inn2Val)}
         </div>
+        ${(inn3Val||inn4Val)?`<div class="field-row">
+          ${statHtml('3rd Innings',inn3Val)}
+          ${statHtml('4th Innings',inn4Val)}
+        </div>`:''}
         <div class="field-divider"></div>
         <div class="field-row">
           ${playerHtml(normalPlayers[0])}
@@ -2145,6 +2220,8 @@ async function checkExistingPrediction(){
       predictState.winner=d.winner||'';
       $('pf-inn1').value=d.inn1||'';
       $('pf-inn2').value=d.inn2||'';
+      if($('pf-inn3'))$('pf-inn3').value=d.inn3||'';
+      if($('pf-inn4'))$('pf-inn4').value=d.inn4||'';
       if(d.extraQ)$('pf-extra-q').value=d.extraQ;
       renderExtraAnswerInput();
       setExtraAnswerValue(d.extraA||'');
@@ -2178,6 +2255,9 @@ async function submitPrediction(){
   const name=$('pf-name').value.trim();
   const inn1=$('pf-inn1').value.trim();
   const inn2=$('pf-inn2').value.trim();
+  const isTest=_matchFormat==='Test';
+  const inn3=isTest&&$('pf-inn3')?$('pf-inn3').value.trim():'';
+  const inn4=isTest&&$('pf-inn4')?$('pf-inn4').value.trim():'';
   const extra=$('pf-extra').value.trim();
   const statusEl=$('pf-status');
 
@@ -2185,6 +2265,7 @@ async function submitPrediction(){
   if(!name){statusEl.textContent='⚠️ Please enter your name';statusEl.style.color='#c62828';return;}
   if(!predictState.winner){statusEl.textContent='⚠️ Please pick a winner';statusEl.style.color='#c62828';return;}
   if(!inn1||!inn2){statusEl.textContent='⚠️ Please enter both innings scores';statusEl.style.color='#c62828';return;}
+  if(isTest&&(!inn3||!inn4)){statusEl.textContent='⚠️ Please enter all four innings scores';statusEl.style.color='#c62828';return;}
   if(predictState.selectedPlayers.length!==7){statusEl.textContent='⚠️ Please select exactly 7 players';statusEl.style.color='#c62828';return;}
   if(!predictState.captain){statusEl.textContent='⚠️ Please pick a Captain';statusEl.style.color='#c62828';return;}
   if(!predictState.vc){statusEl.textContent='⚠️ Please pick a Vice-Captain';statusEl.style.color='#c62828';return;}
@@ -2200,6 +2281,8 @@ async function submitPrediction(){
     winner:predictState.winner,
     inn1:inn1,
     inn2:inn2,
+    inn3:inn3,
+    inn4:inn4,
     player1:normalPlayers[0]||'',
     player2:normalPlayers[1]||'',
     player3:normalPlayers[2]||'',
@@ -2233,6 +2316,8 @@ async function submitPrediction(){
         : '✅ Prediction submitted successfully! (Row '+result.row+')')+codeHtml;
       /* Reset form */
       $('pf-name').value='';$('pf-inn1').value='';$('pf-inn2').value='';$('pf-extra').value='';
+      if($('pf-inn3'))$('pf-inn3').value='';
+      if($('pf-inn4'))$('pf-inn4').value='';
       $('pf-edit-code').value='';
       predictState.winner='';predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';
       _isEditingExisting=false;
