@@ -324,39 +324,54 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .pchip.cap{background:#fff3e0;color:#a8650f;}
 .pchip.vc{background:#fdecea;color:#b71c1c;}
 /* LEADERBOARD TABLE */
-.lb-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
-.lb-row{background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);animation:fu .35s ease both;}
-.lb-summary{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none;transition:background .15s;}
-.lb-summary:hover{background:#f9fbe7;}
-.lb-rank{font-family:'Oswald',sans-serif;font-size:.95rem;font-weight:700;color:#9e9e9e;min-width:20px;text-align:center;}
-.lb-nm-wrap{flex:1;min-width:0;}
-.lb-nm{font-weight:600;font-size:.95rem;color:#c62828;}
-.lb-nm a{color:#c62828;text-decoration:none;}
-.lb-nm a:hover{text-decoration:underline;color:#0d47a1;}
-.lb-sub{font-size:.74rem;color:#757575;margin-top:2px;}
-.lb-sub b{color:#212121;font-weight:600;}
-.lb-expand-btn{width:26px;height:26px;border-radius:50%;background:#f5f5f5;border:1px solid #e0e0e0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.88rem;font-weight:700;color:#757575;transition:all .2s;}
-.lb-summary:hover .lb-expand-btn{background:#fdecea;border-color:#ef9a9a;color:#b71c1c;}
-.lb-row.open .lb-expand-btn{background:#8e1616;border-color:#8e1616;color:#fff;transform:rotate(45deg);}
-.lb-details{display:none;border-top:1px solid #e0e0e0;padding:12px 14px 14px;background:#fafafa;}
-.lb-row.open .lb-details{display:block;}
-.lb-total{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#8e1616;margin-bottom:10px;}
-.lb-total span{font-size:.68rem;color:#9e9e9e;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-weight:600;margin-left:6px;}
-.lb-match-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f0f0;gap:10px;}
-.lb-match-row:last-child{border-bottom:none;}
-.lb-match-nm{font-size:.84rem;color:#212121;font-weight:500;}
-.lb-match-pts{font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;color:#2e7d32;white-space:nowrap;}
-.lb-match-pts.notplayed{color:#bbb;font-weight:500;font-style:italic;}
-.lb-badge{display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:.66rem;font-weight:700;letter-spacing:.3px;padding:2px 8px;border-radius:10px;margin-left:7px;vertical-align:middle;}
-.lb-badge.qualified{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
+.lb-list{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+
+/* Podium — visual highlight for the top 3, decorative only */
+.lb-podium{display:flex;align-items:flex-end;gap:8px;margin:8px 0 18px;}
+.lb-podium-card{flex:1;min-width:0;background:#fff;border-radius:14px;padding:14px 6px 12px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.07);animation:fu .35s ease both;}
+.lb-podium-card.p1{order:2;padding-top:20px;background:linear-gradient(160deg,#fff8e1,#fff);border:2px solid #f0b429;}
+.lb-podium-card.p2{order:1;background:linear-gradient(160deg,#f5f5f5,#fff);border:2px solid #bdbdbd;margin-bottom:14px;}
+.lb-podium-card.p3{order:3;background:linear-gradient(160deg,#fff3e0,#fff);border:2px solid #d7a172;margin-bottom:22px;}
+.lb-podium-medal{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-family:'Teko',sans-serif;font-weight:700;font-size:1.1rem;color:#fff;}
+.lb-podium-card.p1 .lb-podium-medal{background:linear-gradient(135deg,#f0b429,#c9941a);box-shadow:0 2px 8px rgba(201,148,26,.4);}
+.lb-podium-card.p2 .lb-podium-medal{background:linear-gradient(135deg,#c7c7c7,#8f8f8f);}
+.lb-podium-card.p3 .lb-podium-medal{background:linear-gradient(135deg,#d7a172,#a8703f);}
+.lb-podium-nm{font-weight:700;font-size:.8rem;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-podium-total{font-family:'Teko',sans-serif;font-size:1.7rem;font-weight:700;color:#c62828;line-height:1;margin-top:3px;}
+.lb-podium-avg{font-size:.64rem;color:#9e9e9e;margin-top:2px;text-transform:uppercase;letter-spacing:.03em;}
+
+/* Rank rows */
+.lb-row2{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#fff;border:1px solid #ece8e2;border-radius:10px;cursor:pointer;user-select:none;transition:background .15s;animation:fu .35s ease both;}
+.lb-row2:hover{background:#fdf8f4;}
+.lb-row2.unqualified{opacity:.8;}
+.lb-row2-rank{font-family:'Teko',sans-serif;font-size:1.15rem;font-weight:700;color:#9e9e9e;min-width:24px;text-align:center;flex-shrink:0;}
+.lb-row2-nm{flex:1;min-width:0;font-weight:600;font-size:.88rem;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-row2-nm a{color:inherit;text-decoration:none;}
+.lb-row2-nm a:hover{text-decoration:underline;}
+.lb-row2-stats{font-family:'Barlow Condensed',sans-serif;font-size:.74rem;color:#9e9e9e;text-align:right;white-space:nowrap;flex-shrink:0;}
+.lb-row2-stats b{color:#c62828;font-weight:700;}
+
+/* Expandable match-chip strip */
+.lb-chips-wrap{display:none;background:#fafafa;border:1px solid #ece8e2;border-top:none;border-radius:0 0 10px 10px;margin-top:-7px;padding:10px 10px 12px;}
+.lb-chips-wrap.open{display:block;}
+.lb-chips{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;}
+.lb-chip{flex-shrink:0;min-width:74px;background:#fff;border:1px solid #ece8e2;border-radius:10px;padding:8px 8px 7px;text-align:center;}
+.lb-chip.notplayed{opacity:.45;}
+.lb-chip .lb-chip-nm{font-family:'Oswald',sans-serif;font-size:.58rem;font-weight:500;letter-spacing:.02em;text-transform:uppercase;color:#9e9e9e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;margin:0 auto;}
+.lb-chip .lb-chip-pts{font-family:'Teko',sans-serif;font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1.1;margin-top:3px;}
+.lb-chip .lb-chip-rank{display:inline-block;margin-top:4px;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;padding:1px 7px;border-radius:8px;}
+.lb-chip .lb-chip-rank.r1{background:#fff3d6;color:#a8760a;}
+.lb-chip .lb-chip-rank.r2{background:#f0f0f0;color:#666;}
+.lb-chip .lb-chip-rank.r3{background:#fbe4d0;color:#a8703f;}
+.lb-chip .lb-chip-rank.rn{background:#f5f5f5;color:#9e9e9e;}
+
+.lb-badge{display:inline-flex;align-items:center;gap:3px;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.3px;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;}
 .lb-badge.motivate{background:#fff3e0;color:#a8650f;border:1px solid #ffcc80;}
-.lb-row.unqualified{opacity:.82;}
-.lb-row.unqualified .lb-rank{color:#c9c9c9;}
 .lb-section-hdr{display:flex;align-items:center;gap:8px;margin:14px 0 6px;padding:0 2px;}
 .lb-section-hdr:first-child{margin-top:0;}
 .lb-section-hdr-line{flex:1;height:1px;background:#e0e0e0;}
 .lb-section-hdr-txt{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#9e9e9e;white-space:nowrap;}
-.lb-motivate-note{font-size:.72rem;color:#a8650f;margin-top:3px;font-weight:600;}
+.lb-motivate-note{font-size:.72rem;color:#a8650f;margin-top:8px;font-weight:600;}
 
 /* ════════════════════════════════════════════
    PREDICT TAB — in-app prediction form
@@ -402,11 +417,20 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 /* 2-column squad grid: Team A left, Team B right */
 .predict-squad-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
 .predict-squad-col{display:flex;flex-direction:column;}
+.predict-squad-col-hdr{display:flex;justify-content:space-between;align-items:center;padding:0 6px 4px;}
+.predict-squad-col-hdr .lbl{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9e9e9e;}
 .predict-team-hdr2{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#c62828;padding:6px 0;border-bottom:2px solid #fdecea;margin-bottom:4px;text-align:center;}
-.predict-player-card{display:flex;flex-direction:column;padding:8px 6px;border-bottom:1px solid #f5f5f5;position:relative;}
-.predict-player-card-top{display:flex;align-items:center;justify-content:space-between;gap:4px;}
-.predict-player-card .predict-player-nm2{font-size:.8rem;font-weight:600;color:#212121;line-height:1.2;}
-.predict-player-card .predict-player-sel{font-size:.66rem;color:#9e9e9e;margin-top:2px;}
+.predict-player-card{display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid #f5f5f5;position:relative;}
+.predict-player-role{flex-shrink:0;width:34px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.3px;color:#fff;}
+.predict-player-role.role-BAT{background:#1565c0;}
+.predict-player-role.role-BOWL{background:#2e7d32;}
+.predict-player-role.role-ALL{background:#8e24aa;}
+.predict-player-role.role-WK{background:#e65100;}
+.predict-player-role.role-{background:#9e9e9e;visibility:hidden;}
+.predict-player-info{flex:1;min-width:0;}
+.predict-player-card .predict-player-nm2{font-size:.8rem;font-weight:600;color:#212121;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.predict-player-card .predict-player-sel{font-size:.64rem;color:#9e9e9e;margin-top:2px;}
+.predict-player-pts{flex-shrink:0;font-family:'Teko',sans-serif;font-size:1.05rem;font-weight:700;color:#1a1a1a;min-width:26px;text-align:right;}
 .predict-add-btn2{width:26px;height:26px;border-radius:50%;border:2px solid #2e7d32;background:#fff;color:#2e7d32;font-size:.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;}
 .predict-add-btn2.selected{background:#2e7d32;color:#fff;}
 .predict-add-btn2:disabled{opacity:.3;cursor:not-allowed;border-color:#ccc;color:#ccc;}
@@ -1170,8 +1194,7 @@ function buildLive(data){
      literal "Batters" label row in the data was unreliable (that label
      sometimes falls outside the fetched range, silently dropping both
      the section title AND the column headers above the batter rows). */
-  let html=`<tr class="live-sec-row"><td colspan="6">Batting</td></tr>`
-          +`<tr><th>Batter</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr>`;
+  let html=`<tr><th>Batter</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr>`;
   let bowlHdrDone=false;
   for(const row of data){
     const cells=row.map(c=>(c||'').trim());
@@ -1179,7 +1202,6 @@ function buildLive(data){
     const c0=cells[0];
     if(/^batters?$/i.test(c0))continue; /* already rendered above — skip the label row itself */
     if(/^bowlers?$/i.test(c0)){
-      html+=`<tr class="live-sec-row"><td colspan="6">Bowling</td></tr>`;
       if(!bowlHdrDone){html+=`<tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>ECO</th></tr>`;bowlHdrDone=true;}
       continue;
     }
@@ -1678,43 +1700,75 @@ function renderLeaderboard(rows){
   const qualified=sorted.filter(r=>n0(r[2])>=qualifyThreshold);
   const unqualified=sorted.filter(r=>n0(r[2])<qualifyThreshold);
 
-  const renderRow=(row,rank,isQualified)=>{
-    const name=row[0],total=row[1]||'0',matches=row[2]||'0',avg=row[3]||'0';
+  /* Per-match standing: for each match column, rank everyone who played it
+     by points (ties share a rank), so "128 pts" can sit next to "#2" —
+     not just what someone scored, but where that placed them that match. */
+  const matchRanks=matchHdrs.map((h,idx)=>{
+    const entries=dataRows
+      .map(r=>({name:r[0],raw:(r.slice(4,lastCol+1)[idx]||'').trim()}))
+      .filter(e=>e.raw!=='')
+      .map(e=>({name:e.name,pts:n0(e.raw)}))
+      .sort((a,b)=>b.pts-a.pts);
+    const map={};let rank=0,prevPts=null,seen=0;
+    entries.forEach(e=>{seen++;if(e.pts!==prevPts){rank=seen;prevPts=e.pts;}map[e.name]=rank;});
+    return map;
+  });
+  const rankPillCls=r=>r===1?'r1':r===2?'r2':r===3?'r3':'rn';
+
+  const buildChips=(row)=>{
+    const name=row[0];
     const matchVals=row.slice(4,lastCol+1);
-    /* Pair each match header with its value, then reverse so LAST match shows first */
-    const matchPairs=matchHdrs.map((h,idx)=>({label:h,val:(matchVals[idx]||'').trim()})).reverse();
-
-    const card=document.createElement('div');
-    card.className='lb-row'+(isQualified?'':' unqualified');card.style.animationDelay=(rank*.03)+'s';
-
-    const matchHtml=matchPairs.map(p=>{
-      const played=p.val!=='';
-      return `<div class="lb-match-row">
-        <span class="lb-match-nm">${esc(p.label)}</span>
-        <span class="lb-match-pts${played?'':' notplayed'}">${played?fmt(n0(p.val))+' Points':'Not Played'}</span>
+    const pairs=matchHdrs.map((h,idx)=>({label:h,val:(matchVals[idx]||'').trim(),rank:matchRanks[idx][name]})).reverse();
+    return pairs.map(p=>{
+      if(p.val==='')return `<div class="lb-chip notplayed"><div class="lb-chip-nm">${esc(p.label)}</div><div class="lb-chip-pts">—</div></div>`;
+      return `<div class="lb-chip">
+        <div class="lb-chip-nm">${esc(p.label)}</div>
+        <div class="lb-chip-pts">${fmt(n0(p.val))}</div>
+        <div class="lb-chip-rank ${rankPillCls(p.rank)}">#${p.rank}</div>
       </div>`;
     }).join('');
-
-    const badge=isQualified
-      ?'<span class="lb-badge qualified">✅ Qualified</span>'
-      :'<span class="lb-badge motivate">🌱 '+(qualifyThreshold-n0(matches))+' more to qualify</span>';
-
-    card.innerHTML=`
-      <div class="lb-summary" onclick="this.closest('.lb-row').classList.toggle('open')">
-        <span class="lb-rank">${rank}</span>
-        <div class="lb-nm-wrap">
-          <div class="lb-nm">${esc(name)}${badge}</div>
-          <div class="lb-sub">Matches <b>${esc(matches)}</b> · Avg <b>${esc(avg)}</b></div>
-          ${isQualified?'':'<div class="lb-motivate-note">'+esc(motivateFor(name))+'</div>'}
-        </div>
-        <div class="lb-expand-btn">+</div>
-      </div>
-      <div class="lb-details">
-        <div class="lb-total">${esc(total)}<span>Total Points</span></div>
-        ${matchHtml}
-      </div>`;
-    list.appendChild(card);
   };
+
+  const medal=rank=>rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+
+  const renderRow=(row,rank,isQualified)=>{
+    const name=row[0],total=row[1]||'0',matches=row[2]||'0',avg=row[3]||'0';
+    const badge=isQualified?'':'<span class="lb-badge motivate">🌱 '+(qualifyThreshold-n0(matches))+' more to qualify</span>';
+
+    const wrap=document.createElement('div');
+    wrap.style.animationDelay=(rank*.02)+'s';
+    wrap.innerHTML=`
+      <div class="lb-row2${isQualified?'':' unqualified'}" onclick="const w=this.nextElementSibling;w.classList.toggle('open')">
+        <span class="lb-row2-rank">${medal(rank)}</span>
+        <span class="lb-row2-nm">${esc(name)}${badge}</span>
+        <span class="lb-row2-stats"><b>${esc(total)}</b> pts · Avg ${esc(avg)} · ${esc(matches)} Pl</span>
+      </div>
+      <div class="lb-chips-wrap">
+        <div class="lb-chips">${buildChips(row)}</div>
+        ${isQualified?'':'<div class="lb-motivate-note">'+esc(motivateFor(name))+'</div>'}
+      </div>`;
+    list.appendChild(wrap);
+  };
+
+  /* Podium — decorative highlight for the top 3 qualified players.
+     They still appear again as normal (tappable) rows further down. */
+  if(qualified.length){
+    const top3=qualified.slice(0,3);
+    const order=[1,0,2]; // visual left-to-right: #2, #1, #3
+    let podium='<div class="lb-podium">';
+    order.forEach(i=>{
+      const row=top3[i];
+      if(!row){podium+='<div class="lb-podium-card" style="visibility:hidden"></div>';return;}
+      podium+=`<div class="lb-podium-card p${i+1}">
+        <div class="lb-podium-medal">${i+1}</div>
+        <div class="lb-podium-nm">${esc(row[0])}</div>
+        <div class="lb-podium-total">${esc(row[1]||'0')}</div>
+        <div class="lb-podium-avg">Avg ${esc(row[3]||'0')}</div>
+      </div>`;
+    });
+    podium+='</div>';
+    list.insertAdjacentHTML('beforeend',podium);
+  }
 
   if(qualified.length){
     list.insertAdjacentHTML('beforeend','<div class="lb-section-hdr"><span class="lb-section-hdr-txt">🏆 Qualified (played '+qualifyThreshold+'+ matches)</span><span class="lb-section-hdr-line"></span></div>');
@@ -1912,7 +1966,7 @@ function populateExtraPredDropdown(){
   renderExtraAnswerInput();
 }
 
-let predictState={teamA:'',teamB:'',squadA:[],squadB:[],winner:'',selectedPlayers:[],captain:'',vc:''};
+let predictState={teamA:'',teamB:'',squadA:[],squadB:[],roleMap:{},ptsMap:{},winner:'',selectedPlayers:[],captain:'',vc:''};
 
 let _predictTimerInterval=null;
 
@@ -1946,16 +2000,25 @@ async function loadPredictTab(){
   sh('predict-ld');hd('predict-main');hd('predict-err');
   try{
     const rows=await fetchSheetByGidDirect(638993616);
-    /* B1=teamA name(rows[0][1]), E1=teamB name(rows[0][4]); B2:B30=squadA, E2:E30=squadB */
+    /* B1=teamA name(rows[0][1]), E1=teamB name(rows[0][4]); B2:B30=squadA, E2:E30=squadB
+       C2:C30=squadA role, F2:F30=squadB role (added alongside the bilateral squads) */
     /* H1=deadline date/time (rows[0][7]) — enter as "2026-07-10 18:30" */
     const teamA=(rows[0]||[])[1]||'Team A';
     const teamB=(rows[0]||[])[4]||'Team B';
     const squadA=rows.slice(1,30).map(r=>(r[1]||'').trim()).filter(Boolean);
     const squadB=rows.slice(1,30).map(r=>(r[4]||'').trim()).filter(Boolean);
+    const roleMap={};
+    rows.slice(1,30).forEach(r=>{
+      const nA=(r[1]||'').trim(),rA=(r[2]||'').trim();
+      const nB=(r[4]||'').trim(),rB=(r[5]||'').trim();
+      if(nA)roleMap[nA]=rA;
+      if(nB)roleMap[nB]=rB;
+    });
     const deadlineStr=(rows[0]||[])[7]||'';
 
     predictState.teamA=teamA;predictState.teamB=teamB;
     predictState.squadA=squadA;predictState.squadB=squadB;
+    predictState.roleMap=roleMap;
     predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';predictState.winner='';
 
     const deadline=parseDeadlineStr(deadlineStr);
@@ -1980,6 +2043,20 @@ async function loadPredictTab(){
        and the innings-score field count both depend on it */
     await ensurePredData();
     const isTest=_matchFormat==='Test';
+
+    /* Points / %Sel-by for the squad picker — same player-meta table the
+       Points tab and player popup already read. Best-effort: if the
+       scorecard sheet isn't reachable yet (e.g. match hasn't started),
+       the picker still works, just without points/%sel shown. */
+    predictState.ptsMap={};
+    try{
+      const sc=await ensureScData();
+      sc.slice(1,34).forEach(row=>{
+        const name=(row[2]||'').trim();
+        if(!name||/^player.?name$/i.test(name))return;
+        predictState.ptsMap[name]={pts:(row[3]||'').trim(),sel:(row[7]||'').trim()};
+      });
+    }catch(e){console.warn('Squad picker: points lookup unavailable',e.message);}
 
     renderPredictWinner();
     renderPredictSquadList();
@@ -2088,6 +2165,20 @@ function renderPredictWinner(){
   });
 }
 
+function lookupPredictPts(name){
+  const map=predictState.ptsMap||{};
+  const clean=cleanPName(name);
+  const keys=Object.keys(map);
+  let key=keys.find(k=>cleanPName(k)===clean);
+  if(!key)key=keys.find(k=>cleanPName(k).includes(clean));
+  if(!key)key=keys.find(k=>clean.includes(cleanPName(k)));
+  if(!key){
+    const words=clean.split(' ').filter(w=>w.length>2);
+    key=keys.find(k=>{const kn=cleanPName(k);return words.length>0&&words.every(w=>kn.includes(w));});
+  }
+  return key?map[key]:null;
+}
+
 function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
   const maxReached=predictState.selectedPlayers.length>=7;
@@ -2098,19 +2189,24 @@ function renderPredictSquadList(){
   [[predictState.teamA,predictState.squadA,colA],[predictState.teamB,predictState.squadB,colB]].forEach(([teamName,squad,col])=>{
     const hdr=document.createElement('div');hdr.className='predict-team-hdr2';hdr.textContent=teamName;
     col.appendChild(hdr);
+    const colHdr=document.createElement('div');colHdr.className='predict-squad-col-hdr';
+    colHdr.innerHTML='<span class="lbl">% Sel by</span><span class="lbl">Points</span>';
+    col.appendChild(colHdr);
     squad.forEach(player=>{
       const isSelected=predictState.selectedPlayers.includes(player);
+      const role=(predictState.roleMap||{})[player]||'';
+      const roleCls=/^bat/i.test(role)?'BAT':/^bowl/i.test(role)?'BOWL':/^(all|ar)/i.test(role)?'ALL':/^wk/i.test(role)?'WK':'';
+      const meta=lookupPredictPts(player);
       const card=document.createElement('div');card.className='predict-player-card';
-      const top=document.createElement('div');top.className='predict-player-card-top';
-      const nmWrap=document.createElement('div');
-      nmWrap.innerHTML=`<div class="predict-player-nm2">${esc(player)}</div>`;
-      const btn=document.createElement('button');
-      btn.className='predict-add-btn2'+(isSelected?' selected':'');
-      btn.textContent=isSelected?'✓':'+';
-      btn.disabled=!isSelected&&maxReached;
-      btn.onclick=()=>togglePlayerSelect(player);
-      top.appendChild(nmWrap);top.appendChild(btn);
-      card.appendChild(top);
+      card.innerHTML=`
+        <div class="predict-player-role role-${roleCls}">${esc(roleCls)}</div>
+        <div class="predict-player-info">
+          <div class="predict-player-nm2">${esc(player)}</div>
+          <div class="predict-player-sel">${meta&&meta.sel?esc(meta.sel)+' Sel':'—'}</div>
+        </div>
+        <div class="predict-player-pts">${meta&&meta.pts?esc(meta.pts):'—'}</div>
+        <button class="predict-add-btn2${isSelected?' selected':''}" ${!isSelected&&maxReached?'disabled':''}>${isSelected?'✓':'+'}</button>`;
+      card.querySelector('button').onclick=()=>togglePlayerSelect(player);
       col.appendChild(card);
     });
   });
