@@ -97,8 +97,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .hero-team .nm a{color:inherit;text-decoration:none;}
 .hero-team .nm a:hover{text-decoration:underline;}
 .hero-team .sc{font-family:'Teko',sans-serif;color:#fff;white-space:nowrap;line-height:1.05;}
-.hero-team .sc-line1{font-size:1.2rem;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;}
-.hero-team .sc-line2{font-size:2.1rem;font-weight:700;color:#fff;white-space:nowrap;}
+.hero-team .sc-line1{font-size:.9rem;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;}
+.hero-team .sc-line2{font-size:1.8rem;font-weight:700;color:#fff;white-space:nowrap;}
 .hero-vs{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;flex-shrink:0;font-family:'Teko',sans-serif;}
 .hero-tabs-card{background:transparent;border-radius:0;overflow:visible;box-shadow:none;margin-bottom:14px;}
 .hero-tabs{display:flex;gap:8px;}
@@ -135,11 +135,12 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .row-notout{background:#f1f8e9}
 .sc-tbl tbody tr.dismiss-row td{padding-top:1px;padding-bottom:7px;color:#8a8580;font-size:.72rem;font-family:'Inter',sans-serif;border-bottom:none;}
 .sc-tbl tbody tr.dismiss-row td:not(:first-child){color:transparent}
-.match-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;background:#fff;border:1px solid #ece8e2;border-radius:14px;padding:12px 16px;margin-top:4px;}
+.match-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;background:#fff;border:1px solid #ece8e2;border-radius:14px;padding:12px 16px;margin-top:4px;}
 @media(max-width:380px){.match-info-grid{grid-template-columns:1fr;}}
-.mi-card{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.mi-card{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.mi-card.wide{grid-column:1/-1;}
 .mi-card-lbl{font-family:'Oswald',sans-serif;font-size:.64rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#8a8580;white-space:nowrap;}
-.mi-card-val{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:#212121;text-align:right;line-height:1.3;}
+.mi-card-val{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:#212121;text-align:left;line-height:1.35;word-break:break-word;}
 .live-box{background:#fff;border:1px solid #f0d9d9;border-radius:14px;overflow:hidden;margin:0 0 14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .live-title{background:#fdecea;border-bottom:1px solid #f0d9d9;padding:6px 14px;font-family:'Oswald',sans-serif;font-size:.64rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a0000;display:flex;align-items:center;gap:6px;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#c62828;animation:pulse 1.2s ease-in-out infinite;flex-shrink:0}
@@ -328,21 +329,19 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 
 /* Podium — visual highlight for the top 3, decorative only */
 .lb-podium{display:flex;align-items:flex-end;justify-content:center;gap:6px;margin:10px 0 20px;}
-.lb-podium-card{flex:1;max-width:110px;min-width:0;display:flex;flex-direction:column;align-items:center;animation:fu .35s ease both;}
+.lb-podium-card{flex:1;max-width:110px;min-width:0;display:flex;flex-direction:column;align-items:center;animation:fu .35s ease both;cursor:pointer;}
 .lb-podium-card.p1{order:2;}
 .lb-podium-card.p2{order:1;}
 .lb-podium-card.p3{order:3;}
-.lb-podium-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Teko',sans-serif;font-weight:700;font-size:1.3rem;color:#fff;margin-bottom:6px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.18);}
-.lb-podium-card.p1 .lb-podium-avatar{background:linear-gradient(135deg,#f0b429,#c9941a);width:52px;height:52px;font-size:1.5rem;}
-.lb-podium-card.p2 .lb-podium-avatar{background:linear-gradient(135deg,#c7c7c7,#8f8f8f);}
-.lb-podium-card.p3 .lb-podium-avatar{background:linear-gradient(135deg,#d7a172,#a8703f);}
-.lb-podium-nm{font-weight:700;font-size:.76rem;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.lb-podium-nm{font-weight:700;font-size:.76rem;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:2px;}
 .lb-podium-total{font-family:'Teko',sans-serif;font-size:1.5rem;font-weight:700;color:#c62828;line-height:1;margin-top:1px;}
 .lb-podium-avg{font-size:.6rem;color:#9e9e9e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;}
 .lb-podium-base{width:100%;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:6px;font-family:'Teko',sans-serif;font-weight:700;font-size:1.3rem;color:#fff;}
 .lb-podium-card.p1 .lb-podium-base{height:64px;background:linear-gradient(180deg,#f0b429,#c9941a);box-shadow:0 -2px 10px rgba(201,148,26,.35);}
 .lb-podium-card.p2 .lb-podium-base{height:44px;background:linear-gradient(180deg,#c7c7c7,#9e9e9e);}
 .lb-podium-card.p3 .lb-podium-base{height:30px;background:linear-gradient(180deg,#d7a172,#a8703f);}
+.lb-podium-chips{margin-top:-10px;margin-bottom:14px;border-radius:10px;}
+.lb-podium-chips.open{display:block;}
 
 /* Rank rows */
 .lb-row2{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#fff;border:1px solid #ece8e2;border-radius:10px;cursor:pointer;user-select:none;transition:background .15s;animation:fu .35s ease both;}
@@ -386,8 +385,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .predict-input:focus{outline:none;border-color:#c62828;background:#fff;}
 
 .predict-winner-row{display:flex;gap:10px;}
-.predict-winner-btn{flex:1;padding:12px 8px;border:2px solid #e0e0e0;border-radius:10px;text-align:center;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;color:#555;transition:all .15s;}
-.predict-winner-btn.active{border-color:#2e7d32;background:#e8f5e9;color:#2e7d32;}
+.predict-winner-btn{flex:1;padding:16px 8px;border:2px solid #ece8e2;border-radius:12px;text-align:center;cursor:pointer;font-family:'Oswald',sans-serif;font-weight:600;font-size:.86rem;letter-spacing:.02em;color:#555;background:#fafafa;transition:all .15s;}
+.predict-winner-btn.active{border-color:#c62828;background:linear-gradient(135deg,#7a0000,#c62828 65%,#e0522f);color:#fff;box-shadow:0 4px 14px -4px rgba(122,0,0,.45);}
+.predict-score-input{width:100%;padding:12px 14px;border:2px solid #ece8e2;border-radius:10px;font-family:'Teko',sans-serif;font-size:1.4rem;font-weight:600;color:#7a0000;background:#fdecea;transition:border-color .15s;}
+.predict-score-input:focus{outline:none;border-color:#c62828;background:#fff;}
+.predict-score-input::placeholder{color:#c9a5a2;font-family:'Inter',sans-serif;font-size:.95rem;}
 
 .predict-picker-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .predict-count{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:#c62828;background:#fdecea;padding:3px 10px;border-radius:12px;}
@@ -576,7 +578,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       </div>
       <!-- Match Info section -->
       <div class="match-info-section" id="match-info-section" style="display:none">
-        <div class="sh" style="margin-top:14px"><span class="sh-t">ℹ️ Match Info</span></div>
+        <div class="sh" style="margin-top:14px"><span class="sh-t">Match Info</span></div>
         <div class="match-info-grid" id="match-info-grid"></div>
       </div>
     </div>
@@ -645,19 +647,19 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 3: Innings scores -->
       <div class="predict-card">
         <label class="predict-lbl">1st Innings Score</label>
-        <input type="number" id="pf-inn1" class="predict-input" placeholder="e.g. 165"/>
+        <input type="number" id="pf-inn1" class="predict-score-input" placeholder="e.g. 165"/>
       </div>
       <div class="predict-card">
         <label class="predict-lbl">2nd Innings Score</label>
-        <input type="number" id="pf-inn2" class="predict-input" placeholder="e.g. 170"/>
+        <input type="number" id="pf-inn2" class="predict-score-input" placeholder="e.g. 170"/>
       </div>
       <div class="predict-card" id="pf-inn3-card" style="display:none">
         <label class="predict-lbl">3rd Innings Score</label>
-        <input type="number" id="pf-inn3" class="predict-input" placeholder="e.g. 180"/>
+        <input type="number" id="pf-inn3" class="predict-score-input" placeholder="e.g. 180"/>
       </div>
       <div class="predict-card" id="pf-inn4-card" style="display:none">
         <label class="predict-lbl">4th Innings Score</label>
-        <input type="number" id="pf-inn4" class="predict-input" placeholder="e.g. 120"/>
+        <input type="number" id="pf-inn4" class="predict-score-input" placeholder="e.g. 120"/>
       </div>
 
       <!-- Step 4: Player picker -->
@@ -1167,7 +1169,7 @@ function renderMatchInfo(sc){
 
   rows.forEach(({lbl,val})=>{
     const card=document.createElement('div');
-    card.className='mi-card';
+    card.className='mi-card'+(val.length>28?' wide':'');
     card.innerHTML=`<div class="mi-card-lbl">${esc(lbl)}</div><div class="mi-card-val">${esc(val)}</div>`;
     grid.appendChild(card);
   });
@@ -1744,25 +1746,38 @@ function renderLeaderboard(rows){
   };
 
   /* Podium — decorative highlight for the top 3 qualified players.
-     They do NOT repeat in the list below anymore — the list starts at rank 4. */
+     They do NOT repeat in the list below anymore — the list starts at
+     rank 4. Cards are clickable to reveal per-match rank+points via the
+     shared chips panel right below the podium. */
   if(qualified.length){
     const top3=qualified.slice(0,3);
     const order=[1,0,2]; // visual left-to-right: #2, #1, #3
-    let podium='<div class="lb-podium">';
+    const podiumWrap=document.createElement('div');podiumWrap.className='lb-podium';
     order.forEach(i=>{
       const row=top3[i];
-      if(!row){podium+='<div class="lb-podium-card" style="visibility:hidden"></div>';return;}
-      const initial=esc((row[0]||'?').trim().charAt(0).toUpperCase());
-      podium+=`<div class="lb-podium-card p${i+1}">
-        <div class="lb-podium-avatar">${initial}</div>
+      const cardEl=document.createElement('div');
+      cardEl.className='lb-podium-card'+(row?' p'+(i+1):'');
+      if(!row){cardEl.style.visibility='hidden';podiumWrap.appendChild(cardEl);return;}
+      cardEl.innerHTML=`
         <div class="lb-podium-nm">${esc(row[0])}</div>
         <div class="lb-podium-total">${esc(row[1]||'0')}</div>
         <div class="lb-podium-avg">Avg ${esc(row[3]||'0')}</div>
-        <div class="lb-podium-base">${i+1}</div>
-      </div>`;
+        <div class="lb-podium-base">${i+1}</div>`;
+      cardEl.onclick=()=>{
+        const panel=$('lb-podium-chips');
+        const alreadyOpenForThis=panel.dataset.name===row[0]&&panel.classList.contains('open');
+        if(alreadyOpenForThis){panel.classList.remove('open');panel.dataset.name='';return;}
+        panel.innerHTML=`<div class="lb-chips">${buildChips(row)}</div>`;
+        panel.dataset.name=row[0];
+        panel.classList.add('open');
+      };
+      podiumWrap.appendChild(cardEl);
     });
-    podium+='</div>';
-    list.insertAdjacentHTML('beforeend',podium);
+    list.appendChild(podiumWrap);
+    const chipsPanel=document.createElement('div');
+    chipsPanel.className='lb-chips-wrap lb-podium-chips';
+    chipsPanel.id='lb-podium-chips';
+    list.appendChild(chipsPanel);
   }
 
   const restQualified=qualified.slice(3);
@@ -2150,6 +2165,7 @@ function renderPredictWinner(){
 function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
   const maxReached=predictState.selectedPlayers.length>=7;
+  const {selPct}=computeSelectionPcts();
 
   const colA=document.createElement('div');colA.className='predict-squad-col';
   const colB=document.createElement('div');colB.className='predict-squad-col';
@@ -2160,11 +2176,13 @@ function renderPredictSquadList(){
     squad.forEach(player=>{
       const isSelected=predictState.selectedPlayers.includes(player);
       const role=(predictState.roleMap||{})[player]||''; /* full text straight from column C/F, shown as-is */
+      const pct=selPct[player];
+      const subLine=[role,pct!==undefined?pct+'% Sel':''].filter(Boolean).join(' · ');
       const card=document.createElement('div');card.className='predict-player-card';
       card.innerHTML=`
         <div class="predict-player-info">
           <div class="predict-player-nm2">${esc(player)}</div>
-          ${role?`<div class="predict-player-role-txt">${esc(role)}</div>`:''}
+          ${subLine?`<div class="predict-player-role-txt">${esc(subLine)}</div>`:''}
         </div>
         <button class="predict-add-btn2${isSelected?' selected':''}" ${!isSelected&&maxReached?'disabled':''}>${isSelected?'−':'+'}</button>`;
       card.querySelector('button').onclick=()=>togglePlayerSelect(player);
@@ -2212,13 +2230,17 @@ function renderPredictCVC(){
     list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 7 players first</div>';
     return;
   }
-  const capPct=computeCaptainPct();
-  predictState.selectedPlayers.forEach(player=>{
+  const {capPct,vcPct}=computeSelectionPcts();
+  const sortedPlayers=[...predictState.selectedPlayers].sort((a,b)=>
+    ((capPct[b]||0)+(vcPct[b]||0))-((capPct[a]||0)+(vcPct[a]||0))
+  );
+  sortedPlayers.forEach(player=>{
     const role=(predictState.roleMap||{})[player]||'';
     const team=predictState.squadA.includes(player)?predictState.teamA:predictState.teamB;
     const isCap=predictState.captain===player;
     const isVc=predictState.vc===player;
-    const pct=capPct[player];
+    const cPct=capPct[player];
+    const vPct=vcPct[player];
 
     const row=document.createElement('div');row.className='cvc-row2';
     row.innerHTML=`
@@ -2229,10 +2251,11 @@ function renderPredictCVC(){
       <div class="cvc-row2-picks">
         <div class="cvc-circle-wrap">
           <div class="cvc-circle c-circle${isCap?' active':''}">C</div>
-          ${pct!==undefined?`<div class="cvc-circle-pct">${pct}%</div>`:''}
+          ${cPct!==undefined?`<div class="cvc-circle-pct">${cPct}%</div>`:''}
         </div>
         <div class="cvc-circle-wrap">
           <div class="cvc-circle vc-circle${isVc?' active':''}">VC</div>
+          ${vPct!==undefined?`<div class="cvc-circle-pct">${vPct}%</div>`:''}
         </div>
       </div>`;
     row.querySelector('.c-circle').onclick=()=>{
@@ -2249,22 +2272,33 @@ function renderPredictCVC(){
   });
 }
 
-/* % of already-submitted predictions that picked each player as Captain —
-   computed from Prediction LO itself (data the app already has), not from
-   any external/historical points source. */
-function computeCaptainPct(){
+/* One pass over already-submitted Prediction LO rows, computing three
+   percentages per player — all from data the app already has:
+   - selPct:  % of submissions that picked them as one of the 5 players
+   - capPct:  % of submissions that picked them as Captain
+   - vcPct:   % of submissions that picked them as Vice-Captain */
+function computeSelectionPcts(){
   const cache=_predCache||[];
   const rows=cache.slice(1,21).filter(r=>(r[1]||'').trim());
   const total=rows.length;
-  const pct={};
-  if(!total)return pct;
-  const counts={};
+  const selCounts={},capCounts={},vcCounts={};
   rows.forEach(r=>{
+    [7,8,9,10,11].forEach(c=>{
+      const p=(r[c]||'').trim();
+      if(p)selCounts[p]=(selCounts[p]||0)+1;
+    });
     const cap=(r[12]||'').trim();
-    if(cap)counts[cap]=(counts[cap]||0)+1;
+    if(cap)capCounts[cap]=(capCounts[cap]||0)+1;
+    const vc=(r[13]||'').trim();
+    if(vc)vcCounts[vc]=(vcCounts[vc]||0)+1;
   });
-  Object.keys(counts).forEach(name=>{pct[name]=Math.round(counts[name]/total*100);});
-  return pct;
+  const toPct=counts=>{
+    const pct={};
+    if(!total)return pct;
+    Object.keys(counts).forEach(name=>{pct[name]=Math.round(counts[name]/total*100);});
+    return pct;
+  };
+  return {selPct:toPct(selCounts),capPct:toPct(capCounts),vcPct:toPct(vcCounts)};
 }
 
 /* ── Preview current picks on cricket field (before submission) ── */
