@@ -61,7 +61,6 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   .field-winner-value{font-size:28px;}
   .field-stat-value{font-size:16px;}
   .field-stat-label{font-size:7.5px;}
-  .field-player-label{font-size:10px;}
   .field-pts{font-size:9.5px;}
   .field-footer{padding:10px 12px 14px;}
   .field-footer-cond{font-size:9.5px;}
@@ -97,7 +96,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .hero-team .nm a{color:inherit;text-decoration:none;}
 .hero-team .nm a:hover{text-decoration:underline;}
 .hero-team .sc{font-family:'Teko',sans-serif;color:#fff;white-space:nowrap;line-height:1.05;}
-.hero-team .sc-line1{font-size:.9rem;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;}
+.hero-team .sc-line1{font-size:1.05rem;font-weight:500;color:rgba(255,255,255,.75);white-space:nowrap;}
 .hero-team .sc-line2{font-size:1.8rem;font-weight:700;color:#fff;white-space:nowrap;}
 .hero-vs{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;flex-shrink:0;font-family:'Teko',sans-serif;}
 .hero-tabs-card{background:transparent;border-radius:0;overflow:visible;box-shadow:none;margin-bottom:14px;}
@@ -273,9 +272,13 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .field-pts{font-family:'Inter',sans-serif;font-weight:800;font-size:11px;letter-spacing:.03em;color:var(--pts-color);text-shadow:0 1px 5px rgba(0,0,0,.65);}
 .field-pts.zero{color:var(--pts-red);}
 
-.field-player{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.field-player-label{font-size:11.5px;font-weight:600;color:var(--cream);text-shadow:0 1px 5px rgba(0,0,0,.6);}
-.field-role-note{font-size:8px;color:var(--sage);letter-spacing:.05em;margin-top:-2px;text-shadow:0 1px 4px rgba(0,0,0,.6);}
+.field-players-list{position:relative;z-index:1;margin-bottom:16px;}
+.field-player-row{display:flex;align-items:center;gap:9px;padding:7px 10px;background:rgba(0,0,0,.2);border-radius:8px;margin-bottom:6px;}
+.field-player-row:last-child{margin-bottom:0;}
+.field-player-slot{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);color:var(--cream);font-family:'Teko',sans-serif;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.field-player-slot.cap{background:var(--gold);color:#3a2a00;}
+.field-player-row .field-player-nm{flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.field-role-note2{font-size:7.5px;color:var(--sage);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;white-space:nowrap;}
 
 .field-divider{display:none;}
 
@@ -755,6 +758,34 @@ async function fetchSheet(names){
   return parseCSV(await r.text());
 }
 
+/* Points tab only needs columns C:J (Name/Total/Bat/Bowl/Field/Sel%/Cap%/VC%),
+   not the full ~164-column sheet the scorecard needs. A gviz SELECT query
+   asks Google to return just those columns, cutting payload size and CSV
+   parse time — the returned rows come back re-indexed starting at 0 (i.e.
+   row[0]=Name, not row[2]), so callers must use the narrow offset. */
+let _ptsCache=null;
+async function ensurePtsData(){
+  if(_ptsCache)return _ptsCache;
+  await ensurePredData();
+  const sheetNames=_matchFormat==='Test'
+    ?['Scorecard Test','scorecard test','Scorecard test','ScoreCard Test']
+    :_matchFormat==='ODI'
+    ?['Scorecard ODI','scorecard odi','Scorecard Odi','ScoreCard ODI']
+    :['Scorecard T20','scorecard t20','Scorecard T 20','ScoreCard T20'];
+  const tq=encodeURIComponent('select C,D,E,F,G,H,I,J');
+  for(const name of sheetNames){
+    try{
+      const r=await fetchTO(`${BASE}&sheet=${encodeURIComponent(name)}&tq=${tq}`);
+      if(!r.ok)continue;
+      const t=await r.text();
+      if(t.startsWith('<!'))continue;
+      _ptsCache=parseCSV(t);
+      return _ptsCache;
+    }catch(e){console.warn(`Points sheet "${name}":`,e.message);}
+  }
+  throw new Error('Could not load points data');
+}
+
 /* Fetch a sheet tab by its gid (more reliable than name when known) */
 async function fetchSheetByGid(gid){
   const r=await fetchTO(`${BASE}&gid=${gid}`);
@@ -871,7 +902,7 @@ async function ensureScData(){
   return _scCache;
 }
 
-function invalidateSharedCache(){_predCache=null;_scCache=null;}
+function invalidateSharedCache(){_predCache=null;_scCache=null;_ptsCache=null;}
 
 async function loadScorecardTab(){
   sh('sc-ld');hd('sc-main');hd('sc-err');
@@ -902,8 +933,15 @@ async function loadPredictionsTab(){
 async function loadPointsTab(){
   sh('pts-ld');hd('pts-main');hd('pts-err');
   try{
-    const sc=await ensureScData();
-    renderPoints(sc);
+    let sc,narrow=true;
+    try{
+      sc=await ensurePtsData();
+    }catch(e){
+      console.warn('Narrow points fetch failed, falling back to full sheet:',e.message);
+      sc=await ensureScData();
+      narrow=false;
+    }
+    renderPoints(sc,narrow);
     hd('pts-ld');sh('pts-main');hd('pts-err');
   }catch(e){
     console.error(e);
@@ -1279,7 +1317,12 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const zeroCls=(pts)=>pts<=0?' zero':'';
   const ptsHtml=(pts)=>`<span class="field-pts${zeroCls(pts)}">${fmt(pts)} PTS</span>`;
   const statHtml=(lbl,val,pts)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span>${ptsHtml(pts)}</div>`;
-  const playerHtml=(val,pts,roleNote)=>`<div class="field-player" ${val?`onclick="openPlayerPopup('${val.replace(/'/g,"\\'")}')"`:''}  style="${val?'cursor:pointer':''}"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}${ptsHtml(pts)}</div>`;
+  const playerRowHtml=(slot,val,pts,note)=>`<div class="field-player-row" ${val?`onclick="openPlayerPopup('${val.replace(/'/g,"\\'")}')" style="cursor:pointer"`:''}>
+    <span class="field-player-slot${note?' cap':''}">${esc(slot)}</span>
+    <span class="field-player-nm">${val?esc(val):'—'}</span>
+    ${note?`<span class="field-role-note2">${esc(note)}</span>`:''}
+    ${ptsHtml(pts)}
+  </div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -1322,23 +1365,19 @@ function buildPredCard(e,displayRank,isWinner,idx){
 
         <div class="field-divider"></div>
 
-        <div class="field-row">
-          ${playerHtml(players[0].val,players[0].pts)}
-          ${playerHtml(players[1].val,players[1].pts)}
-        </div>
-        <div class="field-row">
-          ${playerHtml(players[2].val,players[2].pts)}
-          ${playerHtml(players[3].val,players[3].pts)}
-        </div>
-        <div class="field-row single">
-          ${playerHtml(players[4].val,players[4].pts)}
+        <div class="field-players-list">
+          ${playerRowHtml('P1',players[0].val,players[0].pts)}
+          ${playerRowHtml('P2',players[1].val,players[1].pts)}
+          ${playerRowHtml('P3',players[2].val,players[2].pts)}
+          ${playerRowHtml('P4',players[3].val,players[3].pts)}
+          ${playerRowHtml('P5',players[4].val,players[4].pts)}
         </div>
 
         <div class="field-divider"></div>
 
-        <div class="field-row">
-          ${playerHtml(capVal,capPts,'Captain · 2×')}
-          ${playerHtml(vcVal,vcPts,'Vice-Captain · 1.5×')}
+        <div class="field-players-list">
+          ${playerRowHtml('C',capVal,capPts,'2× Captain')}
+          ${playerRowHtml('VC',vcVal,vcPts,'1.5× Vice-Captain')}
         </div>
       </div>
 
@@ -1606,11 +1645,13 @@ function closePlayerPopup(){
 function toggleCard(card){card.classList.toggle('open');}
 
 /* ── POINTS TABLE ── */
-function renderPoints(sc){
+function renderPoints(sc,narrow){
   const list=$('pts-list');list.innerHTML='';
-  /* cols within row: 0=Name 1=TotalPts 2=BatPts 3=BowlPts 4=FieldPts 5=Sel% 6=Cap% 7=VC% */
+  /* narrow fetch: row = [Name,TotalPts,BatPts,BowlPts,FieldPts,Sel%,Cap%,VC%] starting at 0
+     full sheet:   same 8 fields but starting at column index 2 (C) */
+  const off=narrow?0:2;
   const dataRows=sc.slice(1,34).filter(r=>{
-    const cells=r.slice(2,10).map(c=>(c||'').trim());
+    const cells=r.slice(off,off+8).map(c=>(c||'').trim());
     if(!cells.some(c=>c))return false;
     if(/^player.?name$/i.test(cells[0]))return false;
     return true;
@@ -1621,7 +1662,7 @@ function renderPoints(sc){
     hd('pts-ld');sh('pts-main');hd('pts-err');return;
   }
   const sorted=[...dataRows]
-    .map(row=>row.slice(2,10).map(c=>(c||'').trim()))
+    .map(row=>row.slice(off,off+8).map(c=>(c||'').trim()))
     .filter(c=>c[0])
     .sort((a,b)=>n0(b[1])-n0(a[1]));
 
@@ -2336,7 +2377,11 @@ function openPredictPreview(){
   const eA=($('pf-extra').value||'').trim();
 
   const statHtml=(lbl,val)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span></div>`;
-  const playerHtml=(val,roleNote)=>`<div class="field-player"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}</div>`;
+  const playerRowHtml=(slot,val,note)=>`<div class="field-player-row">
+    <span class="field-player-slot${note?' cap':''}">${esc(slot)}</span>
+    <span class="field-player-nm">${val?esc(val):'—'}</span>
+    ${note?`<span class="field-role-note2">${esc(note)}</span>`:''}
+  </div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -2369,21 +2414,17 @@ function openPredictPreview(){
           ${statHtml('4th Innings',inn4Val)}
         </div>`:''}
         <div class="field-divider"></div>
-        <div class="field-row">
-          ${playerHtml(normalPlayers[0])}
-          ${playerHtml(normalPlayers[1])}
-        </div>
-        <div class="field-row">
-          ${playerHtml(normalPlayers[2])}
-          ${playerHtml(normalPlayers[3])}
-        </div>
-        <div class="field-row single">
-          ${playerHtml(normalPlayers[4])}
+        <div class="field-players-list">
+          ${playerRowHtml('P1',normalPlayers[0])}
+          ${playerRowHtml('P2',normalPlayers[1])}
+          ${playerRowHtml('P3',normalPlayers[2])}
+          ${playerRowHtml('P4',normalPlayers[3])}
+          ${playerRowHtml('P5',normalPlayers[4])}
         </div>
         <div class="field-divider"></div>
-        <div class="field-row">
-          ${playerHtml(capVal,'Captain · 2×')}
-          ${playerHtml(vcVal,'Vice-Captain · 1.5×')}
+        <div class="field-players-list">
+          ${playerRowHtml('C',capVal,'2× Captain')}
+          ${playerRowHtml('VC',vcVal,'1.5× Vice-Captain')}
         </div>
       </div>
       ${extraHtml?`<div class="field-footer">${extraHtml}</div>`:''}
