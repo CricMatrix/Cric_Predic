@@ -405,7 +405,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .cvc-row2{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 4px;border-bottom:1px solid #f5f5f5;}
 .cvc-row2-info{min-width:0;flex:1;}
 .cvc-row2-nm{font-size:.78rem;font-weight:600;color:#212121;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cvc-row2-sub{font-size:.62rem;color:#9e9e9e;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cvc-row2-tags{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;}
+.cvc-team-badge{font-size:.6rem;font-weight:700;letter-spacing:.02em;padding:2px 7px;border-radius:5px;border:1px solid;white-space:nowrap;}
+.cvc-role-tag{font-size:.6rem;font-weight:600;color:#616161;background:#fafafa;border:1px solid #ece8e2;padding:2px 7px;border-radius:5px;white-space:nowrap;}
 .cvc-row2-picks{display:flex;gap:14px;flex-shrink:0;}
 .cvc-circle-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;}
 .cvc-circle{width:30px;height:30px;border-radius:50%;border:2px solid #e0e0e0;background:#fff;color:#9e9e9e;font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
@@ -2224,6 +2226,20 @@ function togglePlayerSelect(player){
   renderPredictCVC();
 }
 
+/* Deterministic per-team badge color — teamA/teamB (indices 0/1) always
+   get visually distinct entries, so e.g. "SOB" is always dark green/teal
+   and "BPH" is always dark red/black for a given match. */
+const TEAM_COLOR_PALETTE=[
+  {bg:'#0f3d32',border:'#1f6f57',text:'#6ee7b7'}, // dark green/teal
+  {bg:'#2a0d0d',border:'#7a1f1f',text:'#f87171'}, // dark red/black
+  {bg:'#0a1a33',border:'#1e4d8f',text:'#93c5fd'}, // navy
+  {bg:'#1f0a2e',border:'#6b21a8',text:'#d8b4fe'}, // purple
+];
+function teamColorScheme(team){
+  const idx=team===predictState.teamA?0:team===predictState.teamB?1:2;
+  return TEAM_COLOR_PALETTE[idx%TEAM_COLOR_PALETTE.length];
+}
+
 function renderPredictCVC(){
   const list=$('pf-cvc-list');list.innerHTML='';
   if(predictState.selectedPlayers.length<7){
@@ -2237,6 +2253,7 @@ function renderPredictCVC(){
   sortedPlayers.forEach(player=>{
     const role=(predictState.roleMap||{})[player]||'';
     const team=predictState.squadA.includes(player)?predictState.teamA:predictState.teamB;
+    const tc=teamColorScheme(team);
     const isCap=predictState.captain===player;
     const isVc=predictState.vc===player;
     const cPct=capPct[player];
@@ -2246,7 +2263,10 @@ function renderPredictCVC(){
     row.innerHTML=`
       <div class="cvc-row2-info">
         <div class="cvc-row2-nm">${esc(player)}</div>
-        <div class="cvc-row2-sub">${esc(team)}${role?' '+esc(role):''}</div>
+        <div class="cvc-row2-tags">
+          <span class="cvc-team-badge" style="background:${tc.bg};border-color:${tc.border};color:${tc.text}">${esc(team)}</span>
+          ${role?`<span class="cvc-role-tag">${esc(role)}</span>`:''}
+        </div>
       </div>
       <div class="cvc-row2-picks">
         <div class="cvc-circle-wrap">
