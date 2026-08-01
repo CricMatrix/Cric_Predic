@@ -1625,9 +1625,9 @@ function openPlayerPopup(name){
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
     const grid=document.createElement('div');
     const isTestB=_matchFormat==='Test';
-    grid.style.cssText=`display:grid;grid-template-columns:repeat(${isTestB?4:5},1fr);gap:5px;`;
+    grid.style.cssText=`display:grid;grid-template-columns:repeat(${isTestB?3:5},1fr);gap:5px;`;
     [
-      ['Ov',bowl.statO,null],['Wkt',bowl.statW,bowl.w],
+      ...(isTestB?[]:[['Ov',bowl.statO,null]]),['Wkt',bowl.statW,bowl.w],
       ...(isTestB?[]:[['Maiden',bowl.statM,bowl.m]]),['Eco',bowl.statE,bowl.e],['Total',null,bowl.p]
     ].forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
@@ -2261,7 +2261,7 @@ function renderPredictSquadList(){
     squad.forEach(player=>{
       const isSelected=predictState.selectedPlayers.includes(player);
       const role=(predictState.roleMap||{})[player]||''; /* full text straight from column C/F, shown as-is */
-      const pct=selPct[player];
+      const pct=selPct[cleanPName(player)];
       const subLine=[role,pct!==undefined?pct+'% Sel':''].filter(Boolean).join(' · ');
       const card=document.createElement('div');card.className='predict-player-card';
       card.innerHTML=`
@@ -2330,8 +2330,9 @@ function renderPredictCVC(){
     return;
   }
   const {capPct,vcPct}=computeSelectionPcts();
+  const pctFor=(map,player)=>map[cleanPName(player)]||0;
   const sortedPlayers=[...predictState.selectedPlayers].sort((a,b)=>
-    ((capPct[b]||0)+(vcPct[b]||0))-((capPct[a]||0)+(vcPct[a]||0))
+    (pctFor(capPct,b)+pctFor(vcPct,b))-(pctFor(capPct,a)+pctFor(vcPct,a))
   );
   sortedPlayers.forEach(player=>{
     const role=(predictState.roleMap||{})[player]||'';
@@ -2339,8 +2340,8 @@ function renderPredictCVC(){
     const tc=teamColorScheme(team);
     const isCap=predictState.captain===player;
     const isVc=predictState.vc===player;
-    const cPct=capPct[player];
-    const vPct=vcPct[player];
+    const cPct=capPct[cleanPName(player)];
+    const vPct=vcPct[cleanPName(player)];
 
     const row=document.createElement('div');row.className='cvc-row2';
     row.innerHTML=`
@@ -2385,20 +2386,19 @@ function computeSelectionPcts(){
   const rows=cache.slice(1,21).filter(r=>(r[1]||'').trim());
   const total=rows.length;
   const selCounts={},capCounts={},vcCounts={};
+  const bump=(counts,rawName)=>{
+    const k=cleanPName(rawName);
+    if(k)counts[k]=(counts[k]||0)+1;
+  };
   rows.forEach(r=>{
-    [7,8,9,10,11].forEach(c=>{
-      const p=(r[c]||'').trim();
-      if(p)selCounts[p]=(selCounts[p]||0)+1;
-    });
-    const cap=(r[12]||'').trim();
-    if(cap)capCounts[cap]=(capCounts[cap]||0)+1;
-    const vc=(r[13]||'').trim();
-    if(vc)vcCounts[vc]=(vcCounts[vc]||0)+1;
+    [7,8,9,10,11].forEach(c=>bump(selCounts,r[c]));
+    bump(capCounts,r[12]);
+    bump(vcCounts,r[13]);
   });
   const toPct=counts=>{
     const pct={};
     if(!total)return pct;
-    Object.keys(counts).forEach(name=>{pct[name]=Math.round(counts[name]/total*100);});
+    Object.keys(counts).forEach(k=>{pct[k]=Math.round(counts[k]/total*100);});
     return pct;
   };
   return {selPct:toPct(selCounts),capPct:toPct(capCounts),vcPct:toPct(vcCounts)};
