@@ -199,6 +199,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 @keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 .player-popup-name{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;color:#c62828;margin-bottom:10px;}
 .player-popup-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:.85rem;}
+.player-popup-pct-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 4px;padding-top:6px;border-top:1px solid #f0f0f0;}
+.player-popup-pct-row>div{text-align:center;background:#fafafa;border-radius:8px;padding:6px 2px;}
+.ppr-val{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;color:#8e1616;line-height:1.1;}
+.ppr-lbl{font-size:.62rem;color:#9e9e9e;margin-top:2px;}
 .player-popup-row:last-child{border-bottom:none;}
 .player-popup-row span:first-child{color:#9e9e9e;}
 .player-popup-row span:last-child{font-weight:600;color:#212121;}
@@ -1525,6 +1529,8 @@ function openPlayerPopup(name){
   const bowlEntries=findBowlDetails(clean).filter(bowl=>parseFloat(bowl.p||0)!==0);
   const battingTotal=batEntries.reduce((s,b)=>s+(parseFloat(b.p)||0),0);
   const bowlingTotal=bowlEntries.reduce((s,b)=>s+(parseFloat(b.p)||0),0);
+  const fieldDet=findFieldDetails(clean);
+  const fieldingTotal=fieldDet?fieldDet.totalPts:0;
 
   /* Fuzzy-match a name against a {name:value} map the same way the old
      points-sheet lookup did — needed since this popup can be opened from
@@ -1552,20 +1558,28 @@ function openPlayerPopup(name){
   body.appendChild(totalSlot);
 
   const {selPct,capPct,vcPct}=computeSelectionPcts();
-  const summaryRows=[
+  const statRows=[
     ['Batting',battingTotal?String(battingTotal):''],
     ['Bowling',bowlingTotal?String(bowlingTotal):''],
-    ['Sel. by',(()=>{const v=fuzzyLookup(selPct);return v!==undefined?v+'%':'0%';})()],
-    ['Cap. by',(()=>{const v=fuzzyLookup(capPct);return v!==undefined?v+'%':'0%';})()],
-    ['VC. by',(()=>{const v=fuzzyLookup(vcPct);return v!==undefined?v+'%':'0%';})()],
+    ['Fielding',fieldingTotal?String(fieldingTotal):''],
   ];
-  summaryRows.forEach(([lbl,v])=>{
-    if(!v) return;
-    if((lbl==='Batting'||lbl==='Bowling')&&(v==='0'||!v)) return; /* only these two hide at zero */
+  statRows.forEach(([lbl,v])=>{
+    if(!v||v==='0') return; /* hide zeros */
     const div=document.createElement('div');div.className='player-popup-row';
     div.innerHTML=`<span>${esc(lbl)}</span><span>${esc(v)}</span>`;
     body.appendChild(div);
   });
+
+  const selV=(()=>{const v=fuzzyLookup(selPct);return v!==undefined?v:0;})();
+  const capV=(()=>{const v=fuzzyLookup(capPct);return v!==undefined?v:0;})();
+  const vcV=(()=>{const v=fuzzyLookup(vcPct);return v!==undefined?v:0;})();
+  const pctGrid=document.createElement('div');
+  pctGrid.className='player-popup-pct-row';
+  pctGrid.innerHTML=`
+    <div><div class="ppr-val">${selV}%</div><div class="ppr-lbl">Sel. by</div></div>
+    <div><div class="ppr-val">${capV}%</div><div class="ppr-lbl">Cap. by</div></div>
+    <div><div class="ppr-val">${vcV}%</div><div class="ppr-lbl">VC. by</div></div>`;
+  body.appendChild(pctGrid);
 
   /* Fetch Total Points independently (own try/own fallback) rather than
      trusting whatever _ptsDataCache happens to already hold. */
