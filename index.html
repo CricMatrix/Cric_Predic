@@ -61,6 +61,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   .field-winner-value{font-size:28px;}
   .field-stat-value{font-size:16px;}
   .field-stat-label{font-size:7.5px;}
+  .field-player-label{font-size:10px;}
   .field-pts{font-size:9.5px;}
   .field-footer{padding:10px 12px 14px;}
   .field-footer-cond{font-size:9.5px;}
@@ -272,13 +273,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .field-pts{font-family:'Inter',sans-serif;font-weight:800;font-size:11px;letter-spacing:.03em;color:var(--pts-color);text-shadow:0 1px 5px rgba(0,0,0,.65);}
 .field-pts.zero{color:var(--pts-red);}
 
-.field-players-list{position:relative;z-index:1;margin-bottom:16px;}
-.field-player-row{display:flex;align-items:center;gap:9px;padding:7px 10px;background:rgba(0,0,0,.2);border-radius:8px;margin-bottom:6px;}
-.field-player-row:last-child{margin-bottom:0;}
-.field-player-slot{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);color:var(--cream);font-family:'Teko',sans-serif;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;}
-.field-player-slot.cap{background:var(--gold);color:#3a2a00;}
-.field-player-row .field-player-nm{flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--cream);text-shadow:0 1px 4px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.field-role-note2{font-size:7.5px;color:var(--sage);text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;white-space:nowrap;}
+.field-player{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.field-player-label{font-size:11.5px;font-weight:600;color:var(--cream);text-shadow:0 1px 5px rgba(0,0,0,.6);}
+.field-role-note{font-size:8px;color:var(--sage);letter-spacing:.05em;margin-top:-2px;text-shadow:0 1px 4px rgba(0,0,0,.6);}
 
 .field-divider{display:none;}
 
@@ -1317,12 +1314,7 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const zeroCls=(pts)=>pts<=0?' zero':'';
   const ptsHtml=(pts)=>`<span class="field-pts${zeroCls(pts)}">${fmt(pts)} PTS</span>`;
   const statHtml=(lbl,val,pts)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span>${ptsHtml(pts)}</div>`;
-  const playerRowHtml=(slot,val,pts,note)=>`<div class="field-player-row" ${val?`onclick="openPlayerPopup('${val.replace(/'/g,"\\'")}')" style="cursor:pointer"`:''}>
-    <span class="field-player-slot${note?' cap':''}">${esc(slot)}</span>
-    <span class="field-player-nm">${val?esc(val):'—'}</span>
-    ${note?`<span class="field-role-note2">${esc(note)}</span>`:''}
-    ${ptsHtml(pts)}
-  </div>`;
+  const playerHtml=(val,pts,roleNote)=>`<div class="field-player" ${val?`onclick="openPlayerPopup('${val.replace(/'/g,"\\'")}')"`:''}  style="${val?'cursor:pointer':''}"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}${ptsHtml(pts)}</div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -1365,19 +1357,23 @@ function buildPredCard(e,displayRank,isWinner,idx){
 
         <div class="field-divider"></div>
 
-        <div class="field-players-list">
-          ${playerRowHtml('P1',players[0].val,players[0].pts)}
-          ${playerRowHtml('P2',players[1].val,players[1].pts)}
-          ${playerRowHtml('P3',players[2].val,players[2].pts)}
-          ${playerRowHtml('P4',players[3].val,players[3].pts)}
-          ${playerRowHtml('P5',players[4].val,players[4].pts)}
+        <div class="field-row">
+          ${playerHtml(players[0].val,players[0].pts)}
+          ${playerHtml(players[1].val,players[1].pts)}
+        </div>
+        <div class="field-row">
+          ${playerHtml(players[2].val,players[2].pts)}
+          ${playerHtml(players[3].val,players[3].pts)}
+        </div>
+        <div class="field-row single">
+          ${playerHtml(players[4].val,players[4].pts)}
         </div>
 
         <div class="field-divider"></div>
 
-        <div class="field-players-list">
-          ${playerRowHtml('C',capVal,capPts,'2× Captain')}
-          ${playerRowHtml('VC',vcVal,vcPts,'1.5× Vice-Captain')}
+        <div class="field-row">
+          ${playerHtml(capVal,capPts,'Captain · 2×')}
+          ${playerHtml(vcVal,vcPts,'Vice-Captain · 1.5×')}
         </div>
       </div>
 
@@ -1521,7 +1517,35 @@ function openPlayerPopup(name){
   const body=$('ppBody');body.innerHTML='';
   const clean=cleanPName(name);
 
-  /* ── Summary from Points table ── */
+  /* Batting/bowling breakdown computed first — the summary section below
+     sums these directly instead of trusting the points sheet's separate
+     pre-aggregated "Batting"/"Bowling" cells. */
+  const ORDINAL={1:'1st',2:'2nd'};
+  const batEntries=findBatDetails(clean).filter(bat=>parseFloat(bat.p||0)!==0);
+  const bowlEntries=findBowlDetails(clean).filter(bowl=>parseFloat(bowl.p||0)!==0);
+  const battingTotal=batEntries.reduce((s,b)=>s+(parseFloat(b.p)||0),0);
+  const bowlingTotal=bowlEntries.reduce((s,b)=>s+(parseFloat(b.p)||0),0);
+
+  /* Fuzzy-match a name against a {name:value} map the same way the old
+     points-sheet lookup did — needed since this popup can be opened from
+     scorecard/live-board names that aren't written identically to the
+     Prediction LO submission names. */
+  const fuzzyLookup=(map)=>{
+    const keys=Object.keys(map);
+    let key=keys.find(k=>cleanPName(k)===clean);
+    if(!key)key=keys.find(k=>cleanPName(k).includes(clean));
+    if(!key)key=keys.find(k=>clean.includes(cleanPName(k)));
+    if(!key){
+      const words=clean.split(' ').filter(w=>w.length>2);
+      key=keys.find(k=>{const kn=cleanPName(k);return words.length>0&&words.every(w=>kn.includes(w));});
+    }
+    return key?map[key]:undefined;
+  };
+
+  /* ── Summary: Total Pts still comes from the points sheet (no independent
+     source for the C/VC-multiplier-aware grand total), but Batting/Bowling
+     are now summed from the scorecard directly above, and Sel/Cap/VC are
+     computed directly from submitted predictions — not the points sheet. ── */
   let row=_ptsDataCache.find(r=>cleanPName(r[0])===clean);
   if(!row) row=_ptsDataCache.find(r=>cleanPName(r[0]).includes(clean));
   if(!row) row=_ptsDataCache.find(r=>clean.includes(cleanPName(r[0])));
@@ -1532,45 +1556,41 @@ function openPlayerPopup(name){
       return words.length>0&&words.every(w=>cn.includes(w));
     });
   }
-
-  if(row){
-    const summaryLabels=['Total Pts','Batting','Bowling','Fielding','Sel. by','Cap. by','VC. by'];
-    const vals=row.slice(1,8);
-
-    /* Total Pts — big, prominent, on its own */
-    const totalVal=(vals[0]||'').trim();
-    if(totalVal){
-      const div=document.createElement('div');
-      div.style.cssText='text-align:center;padding:10px 0 12px;border-bottom:2px solid #e0e0e0;margin-bottom:6px;';
-      div.innerHTML=`<div style="font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#9e9e9e;font-weight:600;margin-bottom:3px">TOTAL</div><div style="font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;color:#8e1616;line-height:1">${esc(totalVal)}</div><div style="font-size:.68rem;color:#9e9e9e;margin-top:1px">points</div>`;
-      body.appendChild(div);
-    }
-
-    /* Batting, Bowling, Fielding — hide if 0 */
-    summaryLabels.slice(1).forEach((lbl,i)=>{
-      const v=(vals[i+1]||'').trim();
-      if(!v||v==='0'||v==='0.0') return; /* hide zeros */
-      const div=document.createElement('div');div.className='player-popup-row';
-      div.innerHTML=`<span>${lbl}</span><span>${esc(v)}</span>`;
-      body.appendChild(div);
-    });
+  const totalVal=row?(row[1]||'').trim():'';
+  if(totalVal){
+    const div=document.createElement('div');
+    div.style.cssText='text-align:center;padding:10px 0 12px;border-bottom:2px solid #e0e0e0;margin-bottom:6px;';
+    div.innerHTML=`<div style="font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#9e9e9e;font-weight:600;margin-bottom:3px">TOTAL</div><div style="font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;color:#8e1616;line-height:1">${esc(totalVal)}</div><div style="font-size:.68rem;color:#9e9e9e;margin-top:1px">points</div>`;
+    body.appendChild(div);
   }else{
     body.innerHTML=`<div style="color:#9e9e9e;font-size:.85rem;padding:6px 0">No summary data for "${esc(name)}"</div>`;
   }
 
-  /* ── Batting breakdown from scorecard — one section per innings batted ── */
-  const ORDINAL={1:'1st',2:'2nd',3:'3rd',4:'4th'};
-  const batEntries=findBatDetails(clean).filter(bat=>parseFloat(bat.p||0)!==0);
-  batEntries.forEach(bat=>{
-    const title=batEntries.length>1?`${ORDINAL[bat.inn]} Innings — Batting`:'Batting Points';
+  const {selPct,capPct,vcPct}=computeSelectionPcts();
+  const summaryRows=[
+    ['Batting',battingTotal?String(battingTotal):''],
+    ['Bowling',bowlingTotal?String(bowlingTotal):''],
+    ['Sel. by',(()=>{const v=fuzzyLookup(selPct);return v!==undefined?v+'%':'';})()],
+    ['Cap. by',(()=>{const v=fuzzyLookup(capPct);return v!==undefined?v+'%':'';})()],
+    ['VC. by',(()=>{const v=fuzzyLookup(vcPct);return v!==undefined?v+'%':'';})()],
+  ];
+  summaryRows.forEach(([lbl,v])=>{
+    if(!v||v==='0'||v==='0%') return; /* hide zeros */
+    const div=document.createElement('div');div.className='player-popup-row';
+    div.innerHTML=`<span>${esc(lbl)}</span><span>${esc(v)}</span>`;
+    body.appendChild(div);
+  });
+  batEntries.forEach((bat,idx)=>{
+    const title=batEntries.length>1?`${ORDINAL[idx+1]} Innings — Batting`:'Batting Points';
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
     const grid=document.createElement('div');
     grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:5px;';
+    const isTest=_matchFormat==='Test';
     [
       ['Runs',bat.statR,bat.r],['4s',bat.statF,bat.f],['6s',bat.statS,bat.s],
-      ['25*',null,bat.b25],['SR',bat.statSR,bat.sr],['Duck',null,bat.d],['Total',null,bat.p]
+      ['25*',null,bat.b25],...(isTest?[]:[['SR',bat.statSR,bat.sr]]),['Duck',null,bat.d],['Total',null,bat.p]
     ].forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
       if(n===0&&l!=='Total') return; /* hide zero-point items (except Total) */
@@ -1588,17 +1608,17 @@ function openPlayerPopup(name){
   });
 
   /* ── Bowling breakdown from scorecard — one section per innings bowled ── */
-  const bowlEntries=findBowlDetails(clean).filter(bowl=>parseFloat(bowl.p||0)!==0);
-  bowlEntries.forEach(bowl=>{
-    const title=bowlEntries.length>1?`${ORDINAL[bowl.inn]} Innings — Bowling`:'Bowling Points';
+  bowlEntries.forEach((bowl,idx)=>{
+    const title=bowlEntries.length>1?`${ORDINAL[idx+1]} Innings — Bowling`:'Bowling Points';
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
     sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
     const grid=document.createElement('div');
-    grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:5px;';
+    const isTestB=_matchFormat==='Test';
+    grid.style.cssText=`display:grid;grid-template-columns:repeat(${isTestB?4:5},1fr);gap:5px;`;
     [
       ['Ov',bowl.statO,null],['Wkt',bowl.statW,bowl.w],
-      ['Maiden',bowl.statM,bowl.m],['Eco',bowl.statE,bowl.e],['Total',null,bowl.p]
+      ...(isTestB?[]:[['Maiden',bowl.statM,bowl.m]]),['Eco',bowl.statE,bowl.e],['Total',null,bowl.p]
     ].forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
       if(pts!==null&&n===0&&l!=='Total'&&l!=='Ov') return; /* hide zero-point items */
@@ -2389,11 +2409,7 @@ function openPredictPreview(){
   const eA=($('pf-extra').value||'').trim();
 
   const statHtml=(lbl,val)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span></div>`;
-  const playerRowHtml=(slot,val,note)=>`<div class="field-player-row">
-    <span class="field-player-slot${note?' cap':''}">${esc(slot)}</span>
-    <span class="field-player-nm">${val?esc(val):'—'}</span>
-    ${note?`<span class="field-role-note2">${esc(note)}</span>`:''}
-  </div>`;
+  const playerHtml=(val,roleNote)=>`<div class="field-player"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}</div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -2426,17 +2442,21 @@ function openPredictPreview(){
           ${statHtml('4th Innings',inn4Val)}
         </div>`:''}
         <div class="field-divider"></div>
-        <div class="field-players-list">
-          ${playerRowHtml('P1',normalPlayers[0])}
-          ${playerRowHtml('P2',normalPlayers[1])}
-          ${playerRowHtml('P3',normalPlayers[2])}
-          ${playerRowHtml('P4',normalPlayers[3])}
-          ${playerRowHtml('P5',normalPlayers[4])}
+        <div class="field-row">
+          ${playerHtml(normalPlayers[0])}
+          ${playerHtml(normalPlayers[1])}
+        </div>
+        <div class="field-row">
+          ${playerHtml(normalPlayers[2])}
+          ${playerHtml(normalPlayers[3])}
+        </div>
+        <div class="field-row single">
+          ${playerHtml(normalPlayers[4])}
         </div>
         <div class="field-divider"></div>
-        <div class="field-players-list">
-          ${playerRowHtml('C',capVal,'2× Captain')}
-          ${playerRowHtml('VC',vcVal,'1.5× Vice-Captain')}
+        <div class="field-row">
+          ${playerHtml(capVal,'Captain · 2×')}
+          ${playerHtml(vcVal,'Vice-Captain · 1.5×')}
         </div>
       </div>
       ${extraHtml?`<div class="field-footer">${extraHtml}</div>`:''}
