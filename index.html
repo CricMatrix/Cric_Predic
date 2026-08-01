@@ -1423,27 +1423,34 @@ let _scCache=null;
    Inn1 bowl: name=col29, pts at cols 36-40  (W,B,M,E,P)
    Inn2 bowl: name=col60, pts at cols 67-71
 ══════════════════════════════════════════════════════ */
+/* Column offsets for each innings' batting block — same relative shape
+   (name, then 4 raw stat cols, then a 7-col points breakdown 8 cols later)
+   repeats at a different starting column for each of the 4 innings. */
+const BAT_BLOCKS=[
+  {inn:1,name:12, statR:13, statF:15, statS:16, statSR:17, r:20, f:21, s:22, b25:23, sr:24, d:25, p:26},
+  {inn:2,name:43, statR:44, statF:46, statS:47, statSR:48, r:51, f:52, s:53, b25:54, sr:55, d:56, p:57},
+  {inn:3,name:104,statR:105,statF:107,statS:108,statSR:109,r:112,f:113,s:114,b25:115,sr:116,d:117,p:118},
+  {inn:4,name:135,statR:136,statF:138,statS:139,statSR:140,r:143,f:144,s:145,b25:146,sr:147,d:148,p:149},
+];
+/* Returns one entry per innings the player batted in — length 1 for
+   T20/ODI (only innings 1/2 blocks will ever match), up to 2 for Test
+   (a team bats twice, so a given player appears in at most 2 of the 4
+   blocks). */
 function findBatDetails(clean){
-  if(!_scCache) return null;
-  for(let r=1;r<=30;r++){
-    const row=_scCache[r]||[];
-    if(cleanPName(row[12])===clean&&(row[12]||'').trim()){
-      console.log('[BatDet Inn1] row',r,'cols 20-26:',(row.slice(20,27)));
-      return{inn:1,
-        statR:row[13],statF:row[15],statS:row[16],statSR:row[17],
-        r:row[20],f:row[21],s:row[22],b25:row[23],sr:row[24],d:row[25],p:row[26]};
+  if(!_scCache)return [];
+  const results=[];
+  BAT_BLOCKS.forEach(b=>{
+    for(let r=1;r<=30;r++){
+      const row=_scCache[r]||[];
+      if(cleanPName(row[b.name])===clean&&(row[b.name]||'').trim()){
+        results.push({inn:b.inn,
+          statR:row[b.statR],statF:row[b.statF],statS:row[b.statS],statSR:row[b.statSR],
+          r:row[b.r],f:row[b.f],s:row[b.s],b25:row[b.b25],sr:row[b.sr],d:row[b.d],p:row[b.p]});
+        break;
+      }
     }
-  }
-  for(let r=1;r<=30;r++){
-    const row=_scCache[r]||[];
-    if(cleanPName(row[43])===clean&&(row[43]||'').trim()){
-      console.log('[BatDet Inn2] row',r,'cols 51-57:',(row.slice(51,58)));
-      return{inn:2,
-        statR:row[44],statF:row[46],statS:row[47],statSR:row[48],
-        r:row[51],f:row[52],s:row[53],b25:row[54],sr:row[55],d:row[56],p:row[57]};
-    }
-  }
-  return null;
+  });
+  return results;
 }
 
 /* ════════ Fielding breakdown — Scorecard T20 BW:CB ════════
@@ -1475,27 +1482,29 @@ function findFieldDetails(clean){
   return null;
 }
 
+/* Same idea as BAT_BLOCKS — 4 bowling blocks, points breakdown 7 cols
+   after the name column. */
+const BOWL_BLOCKS=[
+  {inn:1,name:29, statO:30, statM:31, statW:33, statE:34, w:36, b:37, m:38, e:39, p:40},
+  {inn:2,name:60, statO:61, statM:62, statW:64, statE:65, w:67, b:68, m:69, e:70, p:71},
+  {inn:3,name:121,statO:122,statM:123,statW:125,statE:126,w:128,b:129,m:130,e:131,p:132},
+  {inn:4,name:152,statO:153,statM:154,statW:156,statE:157,w:159,b:160,m:161,e:162,p:163},
+];
 function findBowlDetails(clean){
-  if(!_scCache) return null;
-  for(let r=1;r<=11;r++){
-    const row=_scCache[r]||[];
-    if(cleanPName(row[29])===clean&&(row[29]||'').trim()){
-      console.log('[BowlDet Inn1] row',r,'cols 36-40:',(row.slice(36,41)));
-      return{inn:1,
-        statO:row[30],statW:row[33],statM:row[31],statE:row[34],
-        w:row[36],b:row[37],m:row[38],e:row[39],p:row[40]};
+  if(!_scCache)return [];
+  const results=[];
+  BOWL_BLOCKS.forEach(b=>{
+    for(let r=1;r<=11;r++){
+      const row=_scCache[r]||[];
+      if(cleanPName(row[b.name])===clean&&(row[b.name]||'').trim()){
+        results.push({inn:b.inn,
+          statO:row[b.statO],statW:row[b.statW],statM:row[b.statM],statE:row[b.statE],
+          w:row[b.w],b:row[b.b],m:row[b.m],e:row[b.e],p:row[b.p]});
+        break;
+      }
     }
-  }
-  for(let r=1;r<=11;r++){
-    const row=_scCache[r]||[];
-    if(cleanPName(row[60])===clean&&(row[60]||'').trim()){
-      console.log('[BowlDet Inn2] row',r,'cols 67-71:',(row.slice(67,72)));
-      return{inn:2,
-        statO:row[61],statW:row[64],statM:row[62],statE:row[65],
-        w:row[67],b:row[68],m:row[69],e:row[70],p:row[71]};
-    }
-  }
-  return null;
+  });
+  return results;
 }
 
 function cleanPName(s){
@@ -1549,12 +1558,14 @@ function openPlayerPopup(name){
     body.innerHTML=`<div style="color:#9e9e9e;font-size:.85rem;padding:6px 0">No summary data for "${esc(name)}"</div>`;
   }
 
-  /* ── Batting breakdown from scorecard ── */
-  const bat=findBatDetails(clean);
-  if(bat&&parseFloat(bat.p||0)!==0){
+  /* ── Batting breakdown from scorecard — one section per innings batted ── */
+  const ORDINAL={1:'1st',2:'2nd',3:'3rd',4:'4th'};
+  const batEntries=findBatDetails(clean).filter(bat=>parseFloat(bat.p||0)!==0);
+  batEntries.forEach(bat=>{
+    const title=batEntries.length>1?`${ORDINAL[bat.inn]} Innings — Batting`:'Batting Points';
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
-    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Batting Points</div>`;
+    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
     const grid=document.createElement('div');
     grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:5px;';
     [
@@ -1574,14 +1585,15 @@ function openPlayerPopup(name){
     });
     sec.appendChild(grid);
     body.appendChild(sec);
-  }
+  });
 
-  /* ── Bowling breakdown from scorecard ── */
-  const bowl=findBowlDetails(clean);
-  if(bowl&&parseFloat(bowl.p||0)!==0){
+  /* ── Bowling breakdown from scorecard — one section per innings bowled ── */
+  const bowlEntries=findBowlDetails(clean).filter(bowl=>parseFloat(bowl.p||0)!==0);
+  bowlEntries.forEach(bowl=>{
+    const title=bowlEntries.length>1?`${ORDINAL[bowl.inn]} Innings — Bowling`:'Bowling Points';
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
-    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Bowling Points</div>`;
+    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
     const grid=document.createElement('div');
     grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:5px;';
     [
@@ -1603,7 +1615,7 @@ function openPlayerPopup(name){
     });
     sec.appendChild(grid);
     body.appendChild(sec);
-  }
+  });
 
   /* ── Fielding breakdown from scorecard (BW:CB) ── */
   const field=findFieldDetails(clean);
