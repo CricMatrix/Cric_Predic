@@ -787,6 +787,45 @@ async function ensurePtsData(){
   throw new Error('Could not load points data');
 }
 
+/* Name-keyed lookup of the points sheet's own pre-computed values —
+   {total,bat,bowl,field,sel,cap,vc}. Sel/Cap/VC% here are the sheet's own
+   formulas, not re-derived client-side from raw Prediction LO submissions
+   (that approach produced wrong percentages for most players — whatever
+   the sheet's exact counting rule is, it isn't "every non-empty name row
+   in the first 20", so re-guessing it client-side wasn't reliable). */
+let _ptsRowsCache=null;
+async function fetchPtsRowsMap(){
+  if(_ptsRowsCache)return _ptsRowsCache;
+  let sc,narrow=true;
+  try{ sc=await ensurePtsData(); }
+  catch(e){ sc=await ensureScData(); narrow=false; }
+  const off=narrow?0:2;
+  const map={};
+  sc.slice(1,34).forEach(r=>{
+    const row=r.slice(off,off+8).map(c=>(c||'').trim());
+    if(!row[0]||/^player.?name$/i.test(row[0]))return;
+    map[cleanPName(row[0])]={total:row[1],bat:row[2],bowl:row[3],field:row[4],sel:row[5],cap:row[6],vc:row[7]};
+  });
+  _ptsRowsCache=map;
+  return map;
+}
+
+/* Fuzzy-match a player name against a points-rows map (keyed by
+   cleanPName). Needed since squad-list/scorecard/live-board names aren't
+   always written identically to the points sheet's own names. */
+function lookupPtsRow(map,name){
+  const clean=cleanPName(name);
+  const keys=Object.keys(map);
+  let key=keys.find(k=>k===clean);
+  if(!key)key=keys.find(k=>k.includes(clean));
+  if(!key)key=keys.find(k=>clean.includes(k));
+  if(!key){
+    const words=clean.split(' ').filter(w=>w.length>2);
+    key=keys.find(k=>words.length>0&&words.every(w=>k.includes(w)));
+  }
+  return key?map[key]:undefined;
+}
+
 /* Fetch a sheet tab by its gid (more reliable than name when known) */
 async function fetchSheetByGid(gid){
   const r=await fetchTO(`${BASE}&gid=${gid}`);
@@ -903,7 +942,7 @@ async function ensureScData(){
   return _scCache;
 }
 
-function invalidateSharedCache(){_predCache=null;_scCache=null;_ptsCache=null;}
+function invalidateSharedCache(){_predCache=null;_scCache=null;_ptsCache=null;_ptsRowsCache=null;}
 
 async function loadScorecardTab(){
   sh('sc-ld');hd('sc-main');hd('sc-err');
@@ -1532,32 +1571,15 @@ function openPlayerPopup(name){
   const fieldDet=findFieldDetails(clean);
   const fieldingTotal=fieldDet?fieldDet.totalPts:0;
 
-  /* Fuzzy-match a name against a {name:value} map the same way the old
-     points-sheet lookup did — needed since this popup can be opened from
-     scorecard/live-board names that aren't written identically to the
-     Prediction LO submission names. */
-  const fuzzyLookup=(map)=>{
-    const keys=Object.keys(map);
-    let key=keys.find(k=>cleanPName(k)===clean);
-    if(!key)key=keys.find(k=>cleanPName(k).includes(clean));
-    if(!key)key=keys.find(k=>clean.includes(cleanPName(k)));
-    if(!key){
-      const words=clean.split(' ').filter(w=>w.length>2);
-      key=keys.find(k=>{const kn=cleanPName(k);return words.length>0&&words.every(w=>kn.includes(w));});
-    }
-    return key?map[key]:undefined;
-  };
-
-  /* ── Summary: Batting/Bowling summed from the scorecard above, Sel/Cap/VC
-     computed directly from submitted predictions — Total Pts is fetched
-     independently below (async) since it has no other source, instead of
-     depending on _ptsDataCache, which was only ever populated as a
-     side-effect of having visited the Points tab first. */
+  /* ── Summary: Batting/Bowling/Fielding summed directly from the scorecard
+     above. Total Pts and Sel/Cap/VC% are the points sheet's own computed
+     values (fetched async below) — Sel/Cap/VC turned out to be unreliable
+     when re-derived client-side from raw Prediction LO submissions, so
+     this trusts the sheet's own numbers instead. */
   const totalSlot=document.createElement('div');
   totalSlot.id='pp-total-slot';
   body.appendChild(totalSlot);
 
-  const {selPct,capPct,vcPct}=computeSelectionPcts();
   const statRows=[
     ['Batting',battingTotal?String(battingTotal):''],
     ['Bowling',bowlingTotal?String(bowlingTotal):''],
@@ -1570,39 +1592,33 @@ function openPlayerPopup(name){
     body.appendChild(div);
   });
 
-  const selV=(()=>{const v=fuzzyLookup(selPct);return v!==undefined?v:0;})();
-  const capV=(()=>{const v=fuzzyLookup(capPct);return v!==undefined?v:0;})();
-  const vcV=(()=>{const v=fuzzyLookup(vcPct);return v!==undefined?v:0;})();
   const pctGrid=document.createElement('div');
+  pctGrid.id='pp-pct-grid';
   pctGrid.className='player-popup-pct-row';
   pctGrid.innerHTML=`
-    <div><div class="ppr-val">${selV}%</div><div class="ppr-lbl">Sel. by</div></div>
-    <div><div class="ppr-val">${capV}%</div><div class="ppr-lbl">Cap. by</div></div>
-    <div><div class="ppr-val">${vcV}%</div><div class="ppr-lbl">VC. by</div></div>`;
+    <div><div class="ppr-val">–</div><div class="ppr-lbl">Sel. by</div></div>
+    <div><div class="ppr-val">–</div><div class="ppr-lbl">Cap. by</div></div>
+    <div><div class="ppr-val">–</div><div class="ppr-lbl">VC. by</div></div>`;
   body.appendChild(pctGrid);
 
-  /* Fetch Total Points independently (own try/own fallback) rather than
-     trusting whatever _ptsDataCache happens to already hold. */
   (async()=>{
-    let sc,narrow=true;
-    try{ sc=await ensurePtsData(); }
-    catch(e){
-      try{ sc=await ensureScData(); narrow=false; }
-      catch(e2){ return; } /* leave the slot empty — batting/bowling/sel still show fine */
+    let ptsMap;
+    try{ ptsMap=await fetchPtsRowsMap(); }
+    catch(e){ return; } /* leave placeholders — batting/bowling/fielding still show fine */
+    if(!document.body.contains(totalSlot))return; /* popup closed before fetch resolved */
+    const row=lookupPtsRow(ptsMap,name);
+    const totalVal=row?(row.total||'').trim():'';
+    if(totalVal){
+      totalSlot.style.cssText='text-align:center;padding:10px 0 12px;border-bottom:2px solid #e0e0e0;margin-bottom:6px;';
+      totalSlot.innerHTML=`<div style="font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#9e9e9e;font-weight:600;margin-bottom:3px">TOTAL</div><div style="font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;color:#8e1616;line-height:1">${esc(totalVal)}</div><div style="font-size:.68rem;color:#9e9e9e;margin-top:1px">points</div>`;
     }
-    const off=narrow?0:2;
-    const rows=sc.slice(1,34).map(r=>r.slice(off,off+8).map(c=>(c||'').trim())).filter(r=>r[0]);
-    let row=rows.find(r=>cleanPName(r[0])===clean);
-    if(!row) row=rows.find(r=>cleanPName(r[0]).includes(clean));
-    if(!row) row=rows.find(r=>clean.includes(cleanPName(r[0])));
-    if(!row){
-      const words=clean.split(' ').filter(w=>w.length>2);
-      row=rows.find(r=>{const cn=cleanPName(r[0]);return words.length>0&&words.every(w=>cn.includes(w));});
-    }
-    const totalVal=row?(row[1]||'').trim():'';
-    if(!totalVal||!document.body.contains(totalSlot))return; /* popup closed or genuinely no data — leave as-is */
-    totalSlot.style.cssText='text-align:center;padding:10px 0 12px;border-bottom:2px solid #e0e0e0;margin-bottom:6px;';
-    totalSlot.innerHTML=`<div style="font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#9e9e9e;font-weight:600;margin-bottom:3px">TOTAL</div><div style="font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;color:#8e1616;line-height:1">${esc(totalVal)}</div><div style="font-size:.68rem;color:#9e9e9e;margin-top:1px">points</div>`;
+    const selV=row&&row.sel?row.sel:'0%';
+    const capV=row&&row.cap?row.cap:'0%';
+    const vcV=row&&row.vc?row.vc:'0%';
+    pctGrid.innerHTML=`
+      <div><div class="ppr-val">${esc(selV)}</div><div class="ppr-lbl">Sel. by</div></div>
+      <div><div class="ppr-val">${esc(capV)}</div><div class="ppr-lbl">Cap. by</div></div>
+      <div><div class="ppr-val">${esc(vcV)}</div><div class="ppr-lbl">VC. by</div></div>`;
   })();
   batEntries.forEach((bat,idx)=>{
     const title=batEntries.length>1?`${ORDINAL[idx+1]} Innings — Batting`:'Batting Points';
@@ -2154,6 +2170,11 @@ async function loadPredictTab(){
     await ensurePredData();
     const isTest=_matchFormat==='Test';
 
+    /* Points-sheet-sourced Sel/Cap/VC% for the squad picker + C/VC picker —
+       best-effort: pickers still work without it, just without those %s. */
+    try{ predictState.ptsRowsMap=await fetchPtsRowsMap(); }
+    catch(e){ predictState.ptsRowsMap={}; }
+
     renderPredictWinner();
     renderPredictSquadList();
     renderPredictCVC();
@@ -2264,7 +2285,7 @@ function renderPredictWinner(){
 function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
   const maxReached=predictState.selectedPlayers.length>=7;
-  const {selPct}=computeSelectionPcts();
+  const ptsMap=predictState.ptsRowsMap||{};
 
   const colA=document.createElement('div');colA.className='predict-squad-col';
   const colB=document.createElement('div');colB.className='predict-squad-col';
@@ -2275,8 +2296,9 @@ function renderPredictSquadList(){
     squad.forEach(player=>{
       const isSelected=predictState.selectedPlayers.includes(player);
       const role=(predictState.roleMap||{})[player]||''; /* full text straight from column C/F, shown as-is */
-      const pct=selPct[cleanPName(player)];
-      const subLine=[role,pct!==undefined?pct+'% Sel':''].filter(Boolean).join(' · ');
+      const row=lookupPtsRow(ptsMap,player);
+      const pct=row&&row.sel?row.sel:'';
+      const subLine=[role,pct?pct+' Sel':''].filter(Boolean).join(' · ');
       const card=document.createElement('div');card.className='predict-player-card';
       card.innerHTML=`
         <div class="predict-player-info">
@@ -2343,10 +2365,14 @@ function renderPredictCVC(){
     list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 7 players first</div>';
     return;
   }
-  const {capPct,vcPct}=computeSelectionPcts();
-  const pctFor=(map,player)=>map[cleanPName(player)]||0;
+  const ptsMap=predictState.ptsRowsMap||{};
+  const pctFor=(field,player)=>{
+    const row=lookupPtsRow(ptsMap,player);
+    if(!row||!row[field])return 0;
+    return parseFloat(row[field])||0;
+  };
   const sortedPlayers=[...predictState.selectedPlayers].sort((a,b)=>
-    (pctFor(capPct,b)+pctFor(vcPct,b))-(pctFor(capPct,a)+pctFor(vcPct,a))
+    (pctFor('cap',b)+pctFor('vc',b))-(pctFor('cap',a)+pctFor('vc',a))
   );
   sortedPlayers.forEach(player=>{
     const role=(predictState.roleMap||{})[player]||'';
@@ -2354,8 +2380,9 @@ function renderPredictCVC(){
     const tc=teamColorScheme(team);
     const isCap=predictState.captain===player;
     const isVc=predictState.vc===player;
-    const cPct=capPct[cleanPName(player)];
-    const vPct=vcPct[cleanPName(player)];
+    const prow=lookupPtsRow(ptsMap,player);
+    const cPct=prow&&prow.cap?prow.cap:undefined;
+    const vPct=prow&&prow.vc?prow.vc:undefined;
 
     const row=document.createElement('div');row.className='cvc-row2';
     row.innerHTML=`
@@ -2369,11 +2396,11 @@ function renderPredictCVC(){
       <div class="cvc-row2-picks">
         <div class="cvc-circle-wrap">
           <div class="cvc-circle c-circle${isCap?' active':''}">C</div>
-          ${cPct!==undefined?`<div class="cvc-circle-pct">${cPct}%</div>`:''}
+          ${cPct?`<div class="cvc-circle-pct">${esc(cPct)}</div>`:''}
         </div>
         <div class="cvc-circle-wrap">
           <div class="cvc-circle vc-circle${isVc?' active':''}">VC</div>
-          ${vPct!==undefined?`<div class="cvc-circle-pct">${vPct}%</div>`:''}
+          ${vPct?`<div class="cvc-circle-pct">${esc(vPct)}</div>`:''}
         </div>
       </div>`;
     row.querySelector('.c-circle').onclick=()=>{
@@ -2388,34 +2415,6 @@ function renderPredictCVC(){
     };
     list.appendChild(row);
   });
-}
-
-/* One pass over already-submitted Prediction LO rows, computing three
-   percentages per player — all from data the app already has:
-   - selPct:  % of submissions that picked them as one of the 5 players
-   - capPct:  % of submissions that picked them as Captain
-   - vcPct:   % of submissions that picked them as Vice-Captain */
-function computeSelectionPcts(){
-  const cache=_predCache||[];
-  const rows=cache.slice(1,21).filter(r=>(r[1]||'').trim());
-  const total=rows.length;
-  const selCounts={},capCounts={},vcCounts={};
-  const bump=(counts,rawName)=>{
-    const k=cleanPName(rawName);
-    if(k)counts[k]=(counts[k]||0)+1;
-  };
-  rows.forEach(r=>{
-    [7,8,9,10,11].forEach(c=>bump(selCounts,r[c]));
-    bump(capCounts,r[12]);
-    bump(vcCounts,r[13]);
-  });
-  const toPct=counts=>{
-    const pct={};
-    if(!total)return pct;
-    Object.keys(counts).forEach(k=>{pct[k]=Math.round(counts[k]/total*100);});
-    return pct;
-  };
-  return {selPct:toPct(selCounts),capPct:toPct(capCounts),vcPct:toPct(vcCounts)};
 }
 
 /* ── Preview current picks on cricket field (before submission) ── */
