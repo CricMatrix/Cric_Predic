@@ -200,6 +200,27 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .player-popup-name{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;color:#c62828;margin-bottom:10px;}
 .player-popup-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:.85rem;}
 .player-popup-pct-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 4px;padding-top:6px;border-top:1px solid #f0f0f0;}
+
+/* Batting/Bowling/Fielding stat boxes in the player popup */
+.pp-stat-box{text-align:center;border-radius:8px;padding:6px 3px 5px;border:1px solid;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+.pp-stat-val{font-size:.82rem;font-weight:700;color:#212121;}
+.pp-stat-lbl{font-size:.65rem;font-weight:500;color:#9e9e9e;margin-top:0;}
+.pp-stat-lbl.solo{font-size:.68rem;}
+.pp-stat-pts{font-size:.68rem;font-weight:600;margin-top:3px;}
+.pp-stat-box.pos{background:#eef8ef;border-color:#bfe3c2;}
+.pp-stat-box.pos .pp-stat-pts{color:#1b5e20;}
+.pp-stat-box.neg{background:#fdeeee;border-color:#f0bcbc;}
+.pp-stat-box.neg .pp-stat-pts{color:#b71c1c;}
+.pp-stat-box.zero{background:#fafafa;border-color:#ececec;}
+.pp-stat-box.zero .pp-stat-pts{color:#424242;}
+.pp-stat-box.fielding{background:#f6effa;border-color:#ddc3ea;}
+.pp-stat-box.fielding .pp-stat-pts{color:#4a148c;}
+.pp-stat-box.total{background:linear-gradient(160deg,#fff8e1,#fffdf6);border-color:#f0b429;box-shadow:0 2px 6px rgba(201,148,26,.15);}
+.pp-stat-box.total .pp-stat-lbl{color:#a8760a;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.pp-stat-box.total .pp-stat-pts{color:#8e5e0a;font-size:.82rem;font-weight:700;}
+.pp-stat-box.bonus{background:linear-gradient(160deg,#fff3e0,#fffaf3);border-color:#e65100;}
+.pp-stat-box.bonus .pp-stat-lbl{color:#e65100;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.pp-stat-box.bonus .pp-stat-pts{color:#e65100;font-weight:700;}
 .player-popup-pct-row>div{text-align:center;background:#fafafa;border-radius:8px;padding:6px 2px;}
 .ppr-val{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:700;color:#8e1616;line-height:1.1;}
 .ppr-lbl{font-size:.62rem;color:#9e9e9e;margin-top:2px;}
@@ -1620,11 +1641,24 @@ function openPlayerPopup(name){
       <div><div class="ppr-val">${esc(capV)}</div><div class="ppr-lbl">Cap. by</div></div>
       <div><div class="ppr-val">${esc(vcV)}</div><div class="ppr-lbl">VC. by</div></div>`;
   })();
+
+  /* Shared box builder for all batting/bowling/fielding stat grids —
+     variant: undefined (auto pos/neg/zero by sign), 'total', or 'bonus'. */
+  const statBox=(label,statText,pts,variant)=>{
+    const n=parseFloat(pts)||0;
+    const cls=variant||(n<0?'neg':n>0?'pos':'zero');
+    const top=statText&&String(statText).trim()
+      ?`<div class="pp-stat-val">${esc(statText)}</div><div class="pp-stat-lbl">${esc(label)}</div>`
+      :`<div class="pp-stat-lbl solo">${esc(label)}</div>`;
+    return `<div class="pp-stat-box ${cls}">${top}<div class="pp-stat-pts">${pts!=null?fmt(pts):'0'} pts</div></div>`;
+  };
+  const secTitle=title=>`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
+
   batEntries.forEach((bat,idx)=>{
     const title=batEntries.length>1?`${ORDINAL[idx+1]} Innings — Batting`:'Batting Points';
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
-    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
+    sec.innerHTML=secTitle(title);
     const grid=document.createElement('div');
     grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:5px;';
     const isTest=_matchFormat==='Test';
@@ -1634,14 +1668,7 @@ function openPlayerPopup(name){
     ].forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
       if(n===0&&l!=='Total') return; /* hide zero-point items (except Total) */
-      const col=n<0?'#b71c1c':n>0?'#1b5e20':'#424242';
-      const bg=n<0?'#ffebee':n>0?'#e8f5e9':'#f5f5f5';
-      if(l==='Total'){
-        grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px"><div style="font-size:.6rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col};margin-top:2px">${pts||'0'} pts</div></div>`;
-        return;
-      }
-      const statLine=stat&&stat.trim()?`<div><span style="font-size:.82rem;font-weight:700;color:#212121">${stat}</span> <span style="font-size:.68rem;font-weight:500;color:#9e9e9e">${l}</span></div>`:`<div style="font-size:.68rem;font-weight:500;color:#9e9e9e">${l}</div>`;
-      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px">${statLine}<div style="font-size:.68rem;font-weight:600;color:${col};margin-top:2px">${pts||'0'} pts</div></div>`;
+      grid.innerHTML+=l==='Total'?statBox('Total',null,pts,'total'):statBox(l,stat,pts);
     });
     sec.appendChild(grid);
     body.appendChild(sec);
@@ -1652,26 +1679,29 @@ function openPlayerPopup(name){
     const title=bowlEntries.length>1?`${ORDINAL[idx+1]} Innings — Bowling`:'Bowling Points';
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
-    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">${esc(title)}</div>`;
+    sec.innerHTML=secTitle(title);
     const grid=document.createElement('div');
     const isTestB=_matchFormat==='Test';
-    grid.style.cssText=`display:grid;grid-template-columns:repeat(${isTestB?3:5},1fr);gap:5px;`;
-    [
+    /* Bonus = Total minus the sum of whichever component points are shown
+       (e.g. a 5-wicket-haul bonus that's baked into Total but never
+       broken out anywhere on its own). */
+    const wPts=parseFloat(bowl.w)||0, mPts=isTestB?0:(parseFloat(bowl.m)||0), ePts=parseFloat(bowl.e)||0;
+    const totalPts=parseFloat(bowl.p)||0;
+    const bonusPts=Math.round((totalPts-wPts-mPts-ePts)*100)/100;
+    const items=[
       ...(isTestB?[]:[['Ov',bowl.statO,null]]),['Wkt',bowl.statW,bowl.w],
-      ...(isTestB?[]:[['Maiden',bowl.statM,bowl.m]]),['Eco',bowl.statE,bowl.e],['Total',null,bowl.p]
-    ].forEach(([l,stat,pts])=>{
+      ...(isTestB?[]:[['Maiden',bowl.statM,bowl.m]]),['Eco',bowl.statE,bowl.e],
+      ...(bonusPts?[['Bonus',null,bonusPts]]:[]),
+      ['Total',null,bowl.p]
+    ];
+    grid.style.cssText=`display:grid;grid-template-columns:repeat(${items.length},1fr);gap:5px;`;
+    items.forEach(([l,stat,pts])=>{
       const n=parseFloat(pts)||0;
       if(pts!==null&&n===0&&l!=='Total'&&l!=='Ov') return; /* hide zero-point items */
       if(l==='Ov'&&(!stat||!stat.trim())) return;
-      const col=n<0?'#b71c1c':n>0?'#1b5e20':'#424242';
-      const bg=n<0?'#ffebee':n>0?'#e8f5e9':'#f5f5f5';
-      if(l==='Total'){
-        grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 2px"><div style="font-size:.6rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col};margin-top:2px">${pts||'0'} pts</div></div>`;
-        return;
-      }
-      const statLine=stat&&stat.trim()?`<div><span style="font-size:.82rem;font-weight:700;color:#212121">${stat}</span> <span style="font-size:.68rem;font-weight:500;color:#9e9e9e">${l}</span></div>`:`<div style="font-size:.68rem;font-weight:500;color:#9e9e9e">${l}</div>`;
-      const ptsLine=pts!=null?`<div style="font-size:.68rem;font-weight:600;color:${col};margin-top:2px">${pts||'0'} pts</div>`:'';
-      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 2px">${statLine}${ptsLine}</div>`;
+      if(l==='Total'){grid.innerHTML+=statBox('Total',null,pts,'total');return;}
+      if(l==='Bonus'){grid.innerHTML+=statBox('Bonus',null,pts,'bonus');return;}
+      grid.innerHTML+=statBox(l,stat,pts);
     });
     sec.appendChild(grid);
     body.appendChild(sec);
@@ -1682,26 +1712,24 @@ function openPlayerPopup(name){
   if(field&&field.totalPts!==0){
     const sec=document.createElement('div');
     sec.style.cssText='margin-top:10px;border-top:1px solid #f0f0f0;padding-top:8px;';
-    sec.innerHTML=`<div style="font-size:.7rem;color:#9e9e9e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;">Fielding Points</div>`;
+    sec.innerHTML=secTitle('Fielding Points');
     const grid=document.createElement('div');
-    grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:5px;';
-    [
+    const shownSum=(parseFloat(field.catchPts)||0)+(parseFloat(field.stumpPts)||0)+(parseFloat(field.runoutPts)||0)+(parseFloat(field.bowledPts)||0);
+    const bonusPts=Math.round(((parseFloat(field.totalPts)||0)-shownSum)*100)/100;
+    const items=[
       ['Catches',field.catches,field.catchPts],
       ['Stumps',field.stumps,field.stumpPts],
       ['Run Outs',field.runouts,field.runoutPts],
       ['Bowled/LBW',field.bowledLbw,field.bowledPts],
+      ...(bonusPts?[['Bonus',null,bonusPts]]:[]),
       ['Total',null,field.totalPts]
-    ].forEach(([l,cnt,pts])=>{
-      const n=parseFloat(pts)||0;
-      if(l!=='Total'&&(!cnt||cnt===0)) return; /* hide categories with 0 count */
-      const col=n<0?'#b71c1c':n>0?'#4a148c':'#424242';
-      const bg=n<0?'#ffebee':n>0?'#f3e5f5':'#f5f5f5';
-      if(l==='Total'){
-        grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px"><div style="font-size:.6rem;color:#9e9e9e">${l}</div><div style="font-size:.85rem;font-weight:700;color:${col};margin-top:2px">${fmt(pts)} pts</div></div>`;
-        return;
-      }
-      const statLine=`<div><span style="font-size:.82rem;font-weight:700;color:#212121">${fmt(cnt)}</span> <span style="font-size:.68rem;font-weight:500;color:#9e9e9e">${l}</span></div>`;
-      grid.innerHTML+=`<div style="text-align:center;background:${bg};border-radius:6px;padding:5px 3px">${statLine}<div style="font-size:.68rem;font-weight:600;color:${col};margin-top:2px">${fmt(pts)} pts</div></div>`;
+    ];
+    grid.style.cssText=`display:grid;grid-template-columns:repeat(${items.length},1fr);gap:5px;`;
+    items.forEach(([l,cnt,pts])=>{
+      if(l!=='Total'&&l!=='Bonus'&&(!cnt||cnt===0)) return; /* hide categories with 0 count */
+      if(l==='Total'){grid.innerHTML+=statBox('Total',null,pts,'total');return;}
+      if(l==='Bonus'){grid.innerHTML+=statBox('Bonus',null,pts,'bonus');return;}
+      grid.innerHTML+=statBox(l,fmt(cnt),pts,'fielding');
     });
     sec.appendChild(grid);
     body.appendChild(sec);
