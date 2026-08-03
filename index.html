@@ -1138,15 +1138,26 @@ function renderScorecard(pred,sc){
      breaks under a follow-on — the team batting 3rd isn't reliably "the
      other team's 2nd innings" in that case. Falls back to the old
      hardcoded text if the sheet doesn't have these cells populated yet.
-     innLabel itself can't throw (plain array/string access with a
-     fallback), so no try/catch needed around it. */
-  const innLabel=(col,fallback)=>{
-    try{ return ((sc[0]||[])[col]||'').trim()||fallback; }
-    catch(e){ return fallback; }
-  };
+
+     Important: these are NOT fixed columns. The sheet only writes as many
+     team-labels as innings have actually started, then puts "Info" in the
+     very next column after the last one — so "Info" shifts one column to
+     the right every time a new innings begins (CO+CP filled → Info in CQ;
+     all 4 filled → Info moves to CS). So this scans forward from CO and
+     collects labels in order until hitting "Info" (or a blank cell),
+     rather than assuming CO/CP/CQ/CR always mean innings 1/2/3/4. */
+  const innLabels=[];
+  try{
+    const row0=sc[0]||[];
+    for(let c=92;c<92+6;c++){ /* small safety margin past 4 possible labels */
+      const v=(row0[c]||'').trim();
+      if(!v||/^info$/i.test(v))break;
+      innLabels.push(v);
+    }
+  }catch(e){ console.warn('[Innings tab labels] falling back to defaults:',e.message); }
   const tab1=$('hero-tab1'), tab2=$('hero-tab2'), tab3=$('hero-tab3'), tab4=$('hero-tab4');
-  if(tab1)tab1.textContent=innLabel(92,'1st Innings');
-  if(tab2)tab2.textContent=innLabel(93,'2nd Innings');
+  if(tab1)tab1.textContent=innLabels[0]||'1st Innings';
+  if(tab2)tab2.textContent=innLabels[1]||'2nd Innings';
 
   buildBatTable('inn1-bat', rng(sc,1,30,12,17));
   buildBatTable('inn2-bat', inn2BatData);
@@ -1166,8 +1177,8 @@ function renderScorecard(pred,sc){
     buildBatTable('inn4-bat', inn4BatData);
     buildBowlTable('inn3-bowl',rng(sc,1,11,121,127));
     buildBowlTable('inn4-bowl',rng(sc,1,11,152,158));
-    if(tab3){tab3.style.display='';tab3.textContent=innLabel(94,'3rd Innings');}
-    if(tab4){tab4.style.display='';tab4.textContent=innLabel(95,'4th Innings');}
+    if(tab3){tab3.style.display='';tab3.textContent=innLabels[2]||'3rd Innings';}
+    if(tab4){tab4.style.display='';tab4.textContent=innLabels[3]||'4th Innings';}
   }else{
     if(tab3)tab3.style.display='none';
     if(tab4)tab4.style.display='none';
@@ -2281,21 +2292,13 @@ async function loadPredictTab(){
     populateExtraPredDropdown();
 
     /* Test matches predict all 4 innings scores; T20/ODI predict 2.
-       Labels are fixed by team, not match position — "{teamA} 1st",
-       "{teamB} 1st", "{teamA} 2nd", "{teamB} 2nd" — known immediately
-       from the bilateral sheet, no need to wait on match data. This
-       assumes the sheet keeps columns D/E/F/G (1st–4th Inn. Score)
-       fixed to that same team mapping even under a follow-on (i.e. it
-       swaps the 3rd/4th innings data on the sheet side so column F is
-       always teamA's 2nd innings and column G is always teamB's 2nd —
-       see FreezeBlocks.gs). */
+       Labels are plain "1st/2nd/3rd/4th Innings Score" — not team-based,
+       since the sheet's own team-label cells (CO:CR) are a dynamic
+       shifting list, not fixed per-innings columns, so there's no
+       reliable way to derive a fixed team mapping for these fields. */
     const inn3Card=$('pf-inn3-card'), inn4Card=$('pf-inn4-card');
     if(inn3Card)inn3Card.style.display=isTest?'':'none';
     if(inn4Card)inn4Card.style.display=isTest?'':'none';
-    if($('pf-inn1-lbl'))$('pf-inn1-lbl').textContent=teamA+' 1st Innings Score';
-    if($('pf-inn2-lbl'))$('pf-inn2-lbl').textContent=teamB+' 1st Innings Score';
-    if($('pf-inn3-lbl'))$('pf-inn3-lbl').textContent=teamA+' 2nd Innings Score';
-    if($('pf-inn4-lbl'))$('pf-inn4-lbl').textContent=teamB+' 2nd Innings Score';
 
     hd('predict-ld');sh('predict-main');hd('predict-err');
 
