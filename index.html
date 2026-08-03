@@ -1137,8 +1137,13 @@ function renderScorecard(pred,sc){
      ODI/T20) instead of assuming a fixed alternating team pattern, which
      breaks under a follow-on — the team batting 3rd isn't reliably "the
      other team's 2nd innings" in that case. Falls back to the old
-     hardcoded text if the sheet doesn't have these cells populated yet. */
-  const innLabel=(col,fallback)=>((sc[0]||[])[col]||'').trim()||fallback;
+     hardcoded text if the sheet doesn't have these cells populated yet.
+     innLabel itself can't throw (plain array/string access with a
+     fallback), so no try/catch needed around it. */
+  const innLabel=(col,fallback)=>{
+    try{ return ((sc[0]||[])[col]||'').trim()||fallback; }
+    catch(e){ return fallback; }
+  };
   const tab1=$('hero-tab1'), tab2=$('hero-tab2'), tab3=$('hero-tab3'), tab4=$('hero-tab4');
   if(tab1)tab1.textContent=innLabel(92,'1st Innings');
   if(tab2)tab2.textContent=innLabel(93,'2nd Innings');
@@ -2855,7 +2860,7 @@ setInterval(()=>{refreshActiveTab();},15*60*1000);
 <!-- Bottom navigation -->
 <div class="bottom-nav">
   <div class="bn-item" id="bn-btn-pred" onclick="switchTab('pred')">
-    <span class="bn-icon">🏏📋</span><span class="bn-lbl">Predictions</span>
+    <span class="bn-icon">📋</span><span class="bn-lbl">Predictions</span>
   </div>
   <div class="bn-item" id="bn-btn-pts" onclick="switchTab('pts')">
     <span class="bn-icon">🎖️</span><span class="bn-lbl">Points</span>
