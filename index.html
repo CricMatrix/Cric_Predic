@@ -51,7 +51,22 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .rbtn{background:#f5f5f5;border:1px solid #ccc;color:#111;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
 .rbtn:hover{background:#eee;border-color:#999}
 .rbtn:disabled{opacity:.4;cursor:not-allowed}
-.tabs{max-width:100%;margin:0;padding:0 10px;display:flex;gap:1px;border-bottom:2px solid var(--border);background:#f4f4f4;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tabs{display:none;}
+
+/* Bottom navigation */
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;align-items:flex-end;justify-content:space-around;height:58px;background:#fff;border-top:1px solid #ece8e2;box-shadow:0 -2px 12px rgba(0,0,0,.06);padding-bottom:env(safe-area-inset-bottom,0);}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;padding:7px 2px 8px;cursor:pointer;color:#9e9e9e;-webkit-tap-highlight-color:transparent;}
+.bn-icon{font-size:1.25rem;line-height:1;}
+.bn-lbl{font-family:'Oswald',sans-serif;font-size:.58rem;font-weight:500;text-transform:uppercase;letter-spacing:.02em;}
+.bn-item.active{color:#c62828;}
+.bn-item.active .bn-lbl{font-weight:700;}
+.bn-center{flex:0 0 66px;position:relative;justify-content:flex-start;padding-top:0;}
+.bn-center-circle{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#7a0000,#c62828 65%,#e0522f);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px -2px rgba(122,0,0,.5);border:3px solid #fff;margin-top:-22px;}
+.bn-center-circle img{width:32px;height:32px;object-fit:contain;border-radius:50%;}
+.bn-center.active .bn-center-circle{box-shadow:0 4px 18px -1px rgba(122,0,0,.7);}
+.bn-center-lbl{margin-top:1px;}
+.bn-center.active .bn-center-lbl{color:#c62828;}
+.bn-center:not(.active) .bn-center-lbl{color:#9e9e9e;}
 .tabs::-webkit-scrollbar{display:none;}
 @media(max-width:520px){
   .field-header{padding:10px 12px;}
@@ -73,7 +88,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 }
 .tab:hover{color:#7a0000;background:rgba(26,35,126,.05)}
 .tab.active{color:#7a0000;border-bottom-color:#7a0000;background:rgba(26,35,126,.06)}
-.content{max-width:1100px;margin:0 auto;padding:16px 12px 60px}
+.content{max-width:1100px;margin:0 auto;padding:16px 12px 84px}
 .tab-panel{display:none}.tab-panel.active{display:block}
 .status{text-align:center;padding:70px 20px;color:#757575}
 .spin{width:46px;height:46px;border:4px solid rgba(26,35,126,.15);border-top-color:#7a0000;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 18px}
@@ -2255,11 +2270,6 @@ async function loadPredictTab(){
     await ensurePredData();
     const isTest=_matchFormat==='Test';
 
-    /* Points-sheet-sourced Sel/Cap/VC% for the squad picker + C/VC picker —
-       best-effort: pickers still work without it, just without those %s. */
-    try{ predictState.ptsRowsMap=await fetchPtsRowsMap(); }
-    catch(e){ predictState.ptsRowsMap={}; }
-
     renderPredictWinner();
     renderPredictSquadList();
     renderPredictCVC();
@@ -2336,36 +2346,6 @@ function showPredictClosed(deadline){
       <div class="predict-closed-sub">The submission deadline for this match has passed.</div>
       <div class="predict-closed-time">Deadline was: ${deadline.toLocaleString([],{dateStyle:'medium',timeStyle:'short'})}</div>
     </div>`;
-}
-
-/* ── Auto-hide the "Predict" nav tab 5 minutes after the deadline ──
-   Checked once on page load, and (if the deadline is still ahead) scheduled
-   to fire live via setTimeout in case someone's already on the page. */
-const PREDICT_TAB_HIDE_GRACE_MS=5*60*1000;
-let _predictHideTimeout=null;
-
-function hidePredictTabButton(){
-  const btn=$('tab-btn-predict');
-  if(btn)btn.style.display='none';
-  /* If someone's actively on the Predict tab when it disappears, bounce them to Scorecard */
-  if(activeTabName()==='predict')switchTab('sc',$('tab-btn-sc'));
-}
-
-async function checkPredictTabVisibility(){
-  try{
-    const rows=await fetchSheetByGidDirect(638993616);
-    const deadline=parseDeadlineStr((rows[0]||[])[7]||'');
-    if(!deadline)return; /* no deadline set on Bilateral H1 — leave tab visible */
-    const hideAt=deadline.getTime()+PREDICT_TAB_HIDE_GRACE_MS;
-    const now=Date.now();
-    if(now>=hideAt){
-      hidePredictTabButton();
-    }else if(_predictHideTimeout===null){
-      _predictHideTimeout=setTimeout(hidePredictTabButton,hideAt-now);
-    }
-  }catch(e){
-    console.error('[Predict tab visibility check]',e);
-  }
 }
 
 function renderPredictWinner(){
@@ -2741,10 +2721,14 @@ async function submitPrediction(){
 
 let _tabLoaded={sc:false,pred:false,pts:false,lb:false,predict:false};
 function switchTab(name,el){
+  if(!el)el=$('tab-btn-'+name);
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
   $('tab-'+name).classList.add('active');
+  const bnItem=$('bn-btn-'+name);
+  if(bnItem)bnItem.classList.add('active');
   if(_tabLoaded[name])return;
   _tabLoaded[name]=true;
   if(name==='sc')loadScorecardTab();
@@ -2837,8 +2821,7 @@ function hideSplash(){
 }
 
 loadScorecardTab().finally(hideSplash);
-checkPredictTabVisibility();
-setInterval(()=>{refreshActiveTab();checkPredictTabVisibility();},15*60*1000);
+setInterval(()=>{refreshActiveTab();},15*60*1000);
 </script>
 
 <!-- Prediction field modal -->
@@ -2866,6 +2849,26 @@ setInterval(()=>{refreshActiveTab();checkPredictTabVisibility();},15*60*1000);
     <button class="player-popup-close" onclick="closePlayerPopup()">✕</button>
     <div class="player-popup-name" id="ppName"></div>
     <div id="ppBody"></div>
+  </div>
+</div>
+
+<!-- Bottom navigation -->
+<div class="bottom-nav">
+  <div class="bn-item" id="bn-btn-pred" onclick="switchTab('pred')">
+    <span class="bn-icon">🏏📋</span><span class="bn-lbl">Predictions</span>
+  </div>
+  <div class="bn-item" id="bn-btn-pts" onclick="switchTab('pts')">
+    <span class="bn-icon">🎖️</span><span class="bn-lbl">Points</span>
+  </div>
+  <div class="bn-item bn-center active" id="bn-btn-sc" onclick="switchTab('sc')">
+    <div class="bn-center-circle"><img src="logo.png" onerror="this.style.display='none'" alt="Cricmatrix"/></div>
+    <span class="bn-lbl bn-center-lbl">Scorecard</span>
+  </div>
+  <div class="bn-item" id="bn-btn-lb" onclick="switchTab('lb')">
+    <span class="bn-icon">🥇</span><span class="bn-lbl">Leaderboard</span>
+  </div>
+  <div class="bn-item" id="bn-btn-predict" onclick="switchTab('predict')">
+    <span class="bn-icon">🎯</span><span class="bn-lbl">Predict</span>
   </div>
 </div>
 
