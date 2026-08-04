@@ -118,6 +118,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .hero-tabs-card{background:transparent;border-radius:0;overflow:visible;box-shadow:none;margin-bottom:14px;}
 .hero-tabs{display:flex;gap:8px;}
 .hero-tab{flex:1;text-align:center;padding:9px;border-radius:20px;font-family:'Oswald',sans-serif;font-size:.74rem;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:#8a8580;background:#fff;border:1px solid #ece8e2;cursor:pointer;transition:all .15s;}
+.hero-tab-info{color:#a8760a;border-color:#f0d9a3;}
+.hero-tab-info:hover{background:#fffaf0;}
 .hero-tab.active{background:#c62828;color:#fff;border-color:#c62828;}
 .hero-tab:hover:not(.active){background:#fafafa;}
 .innings-panel{display:none;background:#fff;border:1px solid #ece8e2;border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
@@ -575,6 +577,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
             <div class="hero-tab" id="hero-tab2" onclick="switchInnings(2)">2nd Innings</div>
             <div class="hero-tab" id="hero-tab3" onclick="switchInnings(3)" style="display:none">3rd Innings</div>
             <div class="hero-tab" id="hero-tab4" onclick="switchInnings(4)" style="display:none">4th Innings</div>
+            <div class="hero-tab hero-tab-info" id="hero-tab-info" onclick="scrollToMatchInfo()">Info</div>
           </div>
         </div>
         <div class="innings-panel active" id="inn1">
@@ -996,6 +999,13 @@ function switchInnings(n){
   }
 }
 
+/* "Info" tab doesn't switch an innings panel — it jumps down to the
+   Match Info section further down the page. */
+function scrollToMatchInfo(){
+  const el=$('match-info-section');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 /* ── LOAD ── */
 /* ── SHARED DATA CACHE ──
    Prediction LO (pred) and the format-specific Scorecard sheet (sc) are
@@ -1155,9 +1165,25 @@ function renderScorecard(pred,sc){
       innLabels.push(v);
     }
   }catch(e){ console.warn('[Innings tab labels] falling back to defaults:',e.message); }
+
+  /* Show only as many innings tabs as there are actual labels so far
+     (at least 1) — no point showing an empty "2nd Innings" tab while
+     the 1st innings is still in progress. Capped at 2 for T20/ODI even
+     if more labels somehow showed up, since those formats never build
+     innings 3/4 tables anyway. */
+  const maxTabs=isTest?4:2;
+  const visibleCount=Math.min(maxTabs,Math.max(1,innLabels.length));
   const tab1=$('hero-tab1'), tab2=$('hero-tab2'), tab3=$('hero-tab3'), tab4=$('hero-tab4');
-  if(tab1)tab1.textContent=innLabels[0]||'1st Innings';
-  if(tab2)tab2.textContent=innLabels[1]||'2nd Innings';
+  const fallbackLbl=['1st Innings','2nd Innings','3rd Innings','4th Innings'];
+  [tab1,tab2,tab3,tab4].forEach((tab,i)=>{
+    if(!tab)return;
+    if(i<visibleCount){
+      tab.style.display='';
+      tab.textContent=innLabels[i]||fallbackLbl[i];
+    }else{
+      tab.style.display='none';
+    }
+  });
 
   buildBatTable('inn1-bat', rng(sc,1,30,12,17));
   buildBatTable('inn2-bat', inn2BatData);
@@ -1166,7 +1192,8 @@ function renderScorecard(pred,sc){
   buildLive(rng(sc,35,41,2,7));
   renderMatchInfo(sc);
 
-  /* 3rd/4th innings tabs + tables only apply to Test matches */
+  /* 3rd/4th innings tables only apply to Test matches (visibility of their
+     tabs is already handled above by innLabels/visibleCount) */
   let inn3HasData=false, inn4HasData=false;
   if(isTest){
     const inn3BatData=rng(sc,1,30,104,109);
@@ -1177,11 +1204,6 @@ function renderScorecard(pred,sc){
     buildBatTable('inn4-bat', inn4BatData);
     buildBowlTable('inn3-bowl',rng(sc,1,11,121,127));
     buildBowlTable('inn4-bowl',rng(sc,1,11,152,158));
-    if(tab3){tab3.style.display='';tab3.textContent=innLabels[2]||'3rd Innings';}
-    if(tab4){tab4.style.display='';tab4.textContent=innLabels[3]||'4th Innings';}
-  }else{
-    if(tab3)tab3.style.display='none';
-    if(tab4)tab4.style.display='none';
   }
 
   /* Auto-select the furthest innings that has data, else stay on 1st */
