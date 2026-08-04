@@ -2314,13 +2314,18 @@ async function loadPredictTab(){
     populateExtraPredDropdown();
 
     /* Test matches predict all 4 innings scores; T20/ODI predict 2.
-       Labels are plain "1st/2nd/3rd/4th Innings Score" — not team-based,
-       since the sheet's own team-label cells (CO:CR) are a dynamic
-       shifting list, not fixed per-innings columns, so there's no
-       reliable way to derive a fixed team mapping for these fields. */
+       Labels are team-anchored and fixed: column D always means teamA's
+       1st innings, E always teamB's 1st, F teamA's 2nd, G teamB's 2nd —
+       regardless of who actually bats first in the real match. The
+       "(Team A)"/"(Team B)" suffix makes that fixed-slot meaning explicit
+       to predictors, rather than implying "whoever bats 1st". */
     const inn3Card=$('pf-inn3-card'), inn4Card=$('pf-inn4-card');
     if(inn3Card)inn3Card.style.display=isTest?'':'none';
     if(inn4Card)inn4Card.style.display=isTest?'':'none';
+    if($('pf-inn1-lbl'))$('pf-inn1-lbl').textContent=teamA+' 1st (Team A)';
+    if($('pf-inn2-lbl'))$('pf-inn2-lbl').textContent=teamB+' 1st (Team B)';
+    if($('pf-inn3-lbl'))$('pf-inn3-lbl').textContent=teamA+' 2nd (Team A)';
+    if($('pf-inn4-lbl'))$('pf-inn4-lbl').textContent=teamB+' 2nd (Team B)';
 
     hd('predict-ld');sh('predict-main');hd('predict-err');
 
