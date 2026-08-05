@@ -1432,13 +1432,6 @@ function buildLive(data){
 }
 
 /* ── PREDICTIONS ── */
-const FIELDS=[
-  {col:2,lbl:'Winner',cls:'winner'},{col:3,lbl:'1st Inn. Score',cls:''},
-  {col:4,lbl:'2nd Inn. Score',cls:''},{col:5,lbl:'Player 1',cls:''},
-  {col:6,lbl:'Player 2',cls:''},{col:7,lbl:'Player 3',cls:''},
-  {col:8,lbl:'Player 4',cls:''},{col:9,lbl:'Player 5',cls:''},
-  {col:10,lbl:'Captain ★ 2×',cls:'captain'},{col:11,lbl:'V.Captain 1.5×',cls:'vc'},
-];
 const ppCls=v=>{
   if(v<=0)return'z';
   if(v<20)return't1';
@@ -1456,7 +1449,12 @@ function renderPredictions(predRows,all){
     const ptsRow=all[ri+1+22]||[];
     const name=(pred[1]||'').trim();
     if(!name)return null;
-    const totalPts=FIELDS.reduce((a,f)=>a+n0(ptsRow[f.col]),0)+n0(ptsRow[12]);
+    /* Sum every scoring component: winner(2), 1st-4th innings(3-6),
+       player1-5(7-11), captain(12), vc(13), extraordinary(14) — vc and
+       extraordinary were previously missing from this total entirely
+       (the old FIELDS array only covered winner/innings/players, and a
+       captain-only bolt-on was added later but vc/extra never were). */
+    const totalPts=[2,3,4,5,6,7,8,9,10,11,12,13,14].reduce((a,c)=>a+n0(ptsRow[c]),0);
     return{pred,ptsRow,name,totalPts};
   }).filter(Boolean).sort((a,b)=>b.totalPts-a.totalPts);
 
