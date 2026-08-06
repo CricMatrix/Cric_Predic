@@ -527,7 +527,6 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   <div class="hdr">
     <div class="hdr-in">
       <div class="logo">
-        <img src="logo.png" onerror="this.style.display='none'" style="height:42px;width:42px;object-fit:contain;border-radius:6px;" alt="Cricmatrix"/>
         <div>
           <h1>Cric<span class="brand-accent">matrix</span></h1>
         </div>
@@ -2762,6 +2761,7 @@ function switchTab(name,el){
   $('tab-'+name).classList.add('active');
   const bnItem=$('bn-btn-'+name);
   if(bnItem)bnItem.classList.add('active');
+  try{localStorage.setItem('cricmatrix_active_tab',name);}catch(e){}
   if(_tabLoaded[name])return;
   _tabLoaded[name]=true;
   if(name==='sc')loadScorecardTab();
@@ -2853,7 +2853,24 @@ function hideSplash(){
   },Math.max(0,remaining));
 }
 
-loadScorecardTab().finally(hideSplash);
+const VALID_TABS=['sc','pred','pts','lb','predict'];
+let _savedTab='sc';
+try{
+  const saved=localStorage.getItem('cricmatrix_active_tab');
+  if(saved&&VALID_TABS.includes(saved))_savedTab=saved;
+}catch(e){}
+
+if(_savedTab==='sc'){
+  loadScorecardTab().finally(hideSplash);
+}else{
+  /* Scorecard still loads first regardless (cheap once cached, and other
+     tabs rely on its shared pred/sc data), then switch to the tab the
+     user was actually on before they refreshed. */
+  loadScorecardTab().finally(()=>{
+    switchTab(_savedTab);
+    hideSplash();
+  });
+}
 setInterval(()=>{refreshActiveTab();},15*60*1000);
 </script>
 
