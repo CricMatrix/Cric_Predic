@@ -276,7 +276,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   font-family:'Inter',sans-serif;
 }
 .field-header{
-  background:linear-gradient(135deg,var(--navy-deep),var(--navy-mid));
+  background:linear-gradient(135deg,#7a0000,#c62828 65%,#e0522f);
   padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
 }
 .field-header-left{display:flex;align-items:center;gap:9px;}
@@ -710,7 +710,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="predict-card">
         <div class="predict-picker-hdr">
           <label class="predict-lbl" style="margin:0">Pick 7 Players</label>
-          <span class="predict-count" id="pf-player-count">0/7 selected</span>
+          <span class="predict-count" id="pf-player-count">0/11 selected</span>
         </div>
         <div class="predict-team-counts" id="pf-team-counts"></div>
         <div class="predict-battery" id="pf-battery"></div>
@@ -885,9 +885,9 @@ function computeSelectionPcts(){
     if(k)counts[k]=(counts[k]||0)+1;
   };
   rows.forEach(r=>{
-    [7,8,9,10,11,12,13].forEach(c=>bump(selCounts,r[c])); /* players + captain + VC all count as "selected" */
-    bump(capCounts,r[12]);
-    bump(vcCounts,r[13]);
+    [7,8,9,10,11,12,13,14,15,16,17].forEach(c=>bump(selCounts,r[c])); /* players + captain + VC all count as "selected" */
+    bump(capCounts,r[16]);
+    bump(vcCounts,r[17]);
   });
   const toPct=counts=>{
     const pct={};
@@ -952,6 +952,31 @@ const $=id=>document.getElementById(id);
 const sh=id=>{const e=$(id);if(e)e.style.display='';};
 const hd=id=>{const e=$(id);if(e)e.style.display='none';};
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* Dream Team shield — shown next to a player's name in the popup when
+   they're in the top 11 point-holders across the whole match. */
+const DREAM_SHIELD_SVG=`<svg viewBox="0 0 400 500" width="20" height="25" style="vertical-align:middle;flex-shrink:0">
+  <defs>
+    <linearGradient id="dtShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E50914"/><stop offset="50%" stop-color="#990000"/><stop offset="100%" stop-color="#3A0000"/>
+    </linearGradient>
+    <linearGradient id="dtCoreGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF2E2E"/><stop offset="100%" stop-color="#660000"/>
+    </linearGradient>
+    <linearGradient id="dtSilverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF"/><stop offset="50%" stop-color="#CCCCCC"/><stop offset="100%" stop-color="#777777"/>
+    </linearGradient>
+  </defs>
+  <path d="M 200 25 L 345 75 L 325 330 Q 200 455 200 480 Q 200 455 75 330 L 55 75 Z" fill="url(#dtShieldGrad)" stroke="url(#dtSilverGrad)" stroke-width="6"/>
+  <path d="M 200 45 L 325 88 L 307 315 Q 200 430 200 452 Q 200 430 93 315 L 75 88 Z" fill="url(#dtCoreGrad)" stroke="#000000" stroke-width="2" opacity="0.95"/>
+  <g fill="#FFFFFF">
+    <path d="M 140 160 L 175 135 L 175 330 L 140 355 Z"/>
+    <path d="M 115 180 L 140 160 L 140 205 L 115 225 Z"/>
+    <path d="M 215 135 L 250 110 L 250 305 L 215 330 Z"/>
+    <path d="M 190 155 L 215 135 L 215 180 L 190 200 Z"/>
+    <path d="M 80 260 L 320 180 L 320 198 L 80 278 Z" fill="#990000" opacity="0.85"/>
+  </g>
+</svg>`;
 /* A team's score is a single value in T20/ODI, but "X & Y" in Test matches
    once they've batted a 2nd time. Stack it: their earlier innings shown
    small above, their current/latest innings shown large below — instead
@@ -1449,11 +1474,8 @@ function renderPredictions(predRows,all){
     const name=(pred[1]||'').trim();
     if(!name)return null;
     /* Sum every scoring component: winner(2), 1st-4th innings(3-6),
-       player1-5(7-11), captain(12), vc(13), extraordinary(14) — vc and
-       extraordinary were previously missing from this total entirely
-       (the old FIELDS array only covered winner/innings/players, and a
-       captain-only bolt-on was added later but vc/extra never were). */
-    const totalPts=[2,3,4,5,6,7,8,9,10,11,12,13,14].reduce((a,c)=>a+n0(ptsRow[c]),0);
+       player1-9(7-15), captain(16), vc(17), extraordinary(18). */
+    const totalPts=[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].reduce((a,c)=>a+n0(ptsRow[c]),0);
     return{pred,ptsRow,name,totalPts};
   }).filter(Boolean).sort((a,b)=>b.totalPts-a.totalPts);
 
@@ -1478,10 +1500,10 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const inn2Val=(pred[4]||'').trim(),   inn2Pts=n0(ptsRow[4]);
   const inn3Val=(pred[5]||'').trim(),   inn3Pts=n0(ptsRow[5]);  /* Test matches only */
   const inn4Val=(pred[6]||'').trim(),   inn4Pts=n0(ptsRow[6]);  /* Test matches only */
-  const players=[7,8,9,10,11].map(c=>({val:(pred[c]||'').trim(),pts:n0(ptsRow[c])}));
-  const capVal=(pred[12]||'').trim(),  capPts=n0(ptsRow[12]);
-  const vcVal=(pred[13]||'').trim(),   vcPts=n0(ptsRow[13]);
-  const eQ=(pred[14]||'').trim(), eA=(pred[15]||'').trim(), ePts=n0(ptsRow[14]);
+  const players=[7,8,9,10,11,12,13,14,15].map(c=>({val:(pred[c]||'').trim(),pts:n0(ptsRow[c])}));
+  const capVal=(pred[16]||'').trim(),  capPts=n0(ptsRow[16]);
+  const vcVal=(pred[17]||'').trim(),   vcPts=n0(ptsRow[17]);
+  const eQ=(pred[18]||'').trim(), eA=(pred[19]||'').trim(), ePts=n0(ptsRow[18]);
 
   const zeroCls=(pts)=>pts<=0?' zero':'';
   const ptsHtml=(pts)=>`<span class="field-pts${zeroCls(pts)}">${fmt(pts)} PTS</span>`;
@@ -1537,8 +1559,16 @@ function buildPredCard(e,displayRank,isWinner,idx){
           ${playerHtml(players[2].val,players[2].pts)}
           ${playerHtml(players[3].val,players[3].pts)}
         </div>
-        <div class="field-row single">
+        <div class="field-row">
           ${playerHtml(players[4].val,players[4].pts)}
+          ${playerHtml(players[5].val,players[5].pts)}
+        </div>
+        <div class="field-row">
+          ${playerHtml(players[6].val,players[6].pts)}
+          ${playerHtml(players[7].val,players[7].pts)}
+        </div>
+        <div class="field-row single">
+          ${playerHtml(players[8].val,players[8].pts)}
         </div>
 
         <div class="field-divider"></div>
@@ -1740,6 +1770,18 @@ function openPlayerPopup(name){
     if(totalVal){
       totalSlot.style.cssText='text-align:center;padding:10px 0 12px;border-bottom:2px solid #e0e0e0;margin-bottom:6px;';
       totalSlot.innerHTML=`<div style="font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:#9e9e9e;font-weight:600;margin-bottom:3px">TOTAL</div><div style="font-family:'Oswald',sans-serif;font-size:2rem;font-weight:700;color:#8e1616;line-height:1">${esc(totalVal)}</div><div style="font-size:.68rem;color:#9e9e9e;margin-top:1px">points</div>`;
+    }
+    /* Dream Team shield — top 11 point-holders across every player in the
+       match, Dream11-style. Whoever's #1 overall gets a small "C" mark. */
+    if(ptsMap){
+      const sortedEntries=Object.entries(ptsMap).sort((a,b)=>(parseFloat(b[1].total)||0)-(parseFloat(a[1].total)||0));
+      const top11=sortedEntries.slice(0,11);
+      const isTop11=row&&top11.some(([,v])=>v===row);
+      const isDreamCaptain=row&&top11[0]&&top11[0][1]===row;
+      if(isTop11){
+        const nameEl=$('ppName');
+        nameEl.innerHTML=`<span style="display:inline-flex;align-items:center;gap:6px">${esc(name)}${DREAM_SHIELD_SVG}${isDreamCaptain?'<span style="font-family:Oswald,sans-serif;font-size:.62rem;font-weight:700;color:#a8760a;background:#fff3d6;border:1px solid #f0d9a3;border-radius:5px;padding:1px 5px;">DREAM C</span>':''}</span>`;
+      }
     }
     const {selPct,capPct,vcPct}=computeSelectionPcts();
     const selV=lookupPct(selPct,name), capV=lookupPct(capPct,name), vcV=lookupPct(vcPct,name);
@@ -2313,16 +2355,14 @@ async function loadPredictTab(){
     /* Test matches predict all 4 innings scores; T20/ODI predict 2.
        Labels are team-anchored and fixed: column D always means teamA's
        1st innings, E always teamB's 1st, F teamA's 2nd, G teamB's 2nd —
-       regardless of who actually bats first in the real match. The
-       "(Team A)"/"(Team B)" suffix makes that fixed-slot meaning explicit
-       to predictors, rather than implying "whoever bats 1st". */
+       regardless of who actually bats first in the real match. */
     const inn3Card=$('pf-inn3-card'), inn4Card=$('pf-inn4-card');
     if(inn3Card)inn3Card.style.display=isTest?'':'none';
     if(inn4Card)inn4Card.style.display=isTest?'':'none';
-    if($('pf-inn1-lbl'))$('pf-inn1-lbl').textContent=teamA+' 1st (Team A)';
-    if($('pf-inn2-lbl'))$('pf-inn2-lbl').textContent=teamB+' 1st (Team B)';
-    if($('pf-inn3-lbl'))$('pf-inn3-lbl').textContent=teamA+' 2nd (Team A)';
-    if($('pf-inn4-lbl'))$('pf-inn4-lbl').textContent=teamB+' 2nd (Team B)';
+    if($('pf-inn1-lbl'))$('pf-inn1-lbl').textContent=teamA+' 1st';
+    if($('pf-inn2-lbl'))$('pf-inn2-lbl').textContent=teamB+' 1st';
+    if($('pf-inn3-lbl'))$('pf-inn3-lbl').textContent=teamA+' 2nd';
+    if($('pf-inn4-lbl'))$('pf-inn4-lbl').textContent=teamB+' 2nd';
 
     hd('predict-ld');sh('predict-main');hd('predict-err');
 
@@ -2393,7 +2433,7 @@ function renderPredictWinner(){
 
 function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
-  const maxReached=predictState.selectedPlayers.length>=7;
+  const maxReached=predictState.selectedPlayers.length>=11;
   const {selPct}=computeSelectionPcts();
 
   const colA=document.createElement('div');colA.className='predict-squad-col';
@@ -2420,7 +2460,7 @@ function renderPredictSquadList(){
   });
   list.appendChild(colA);list.appendChild(colB);
 
-  $('pf-player-count').textContent=predictState.selectedPlayers.length+'/7 selected';
+  $('pf-player-count').textContent=predictState.selectedPlayers.length+'/11 selected';
 
   /* Team-wise counts */
   const countA=predictState.selectedPlayers.filter(p=>predictState.squadA.includes(p)).length;
@@ -2431,7 +2471,7 @@ function renderPredictSquadList(){
 
   /* Battery-style progress bar (7 segments) */
   const battery=$('pf-battery');battery.innerHTML='';
-  for(let i=0;i<7;i++){
+  for(let i=0;i<11;i++){
     const seg=document.createElement('div');
     seg.className='predict-battery-seg'+(i<predictState.selectedPlayers.length?' filled':'');
     battery.appendChild(seg);
@@ -2446,7 +2486,7 @@ function togglePlayerSelect(player){
     if(predictState.captain===player)predictState.captain='';
     if(predictState.vc===player)predictState.vc='';
   }else{
-    if(predictState.selectedPlayers.length>=7)return;
+    if(predictState.selectedPlayers.length>=11)return;
     predictState.selectedPlayers.push(player);
   }
   renderPredictSquadList();
@@ -2469,7 +2509,7 @@ function teamColorScheme(team){
 
 function renderPredictCVC(){
   const list=$('pf-cvc-list');list.innerHTML='';
-  if(predictState.selectedPlayers.length<7){
+  if(predictState.selectedPlayers.length<11){
     list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 7 players first</div>';
     return;
   }
@@ -2576,8 +2616,16 @@ function openPredictPreview(){
           ${playerHtml(normalPlayers[2])}
           ${playerHtml(normalPlayers[3])}
         </div>
-        <div class="field-row single">
+        <div class="field-row">
           ${playerHtml(normalPlayers[4])}
+          ${playerHtml(normalPlayers[5])}
+        </div>
+        <div class="field-row">
+          ${playerHtml(normalPlayers[6])}
+          ${playerHtml(normalPlayers[7])}
+        </div>
+        <div class="field-row single">
+          ${playerHtml(normalPlayers[8])}
         </div>
         <div class="field-divider"></div>
         <div class="field-row">
@@ -2637,8 +2685,8 @@ async function checkExistingPrediction(){
       renderExtraAnswerInput();
       setExtraAnswerValue(d.extraA||'');
 
-      /* Rebuild 7 selected players = 5 normal + captain + vc */
-      const normals=[d.player1,d.player2,d.player3,d.player4,d.player5].filter(Boolean);
+      /* Rebuild 11 selected players = 9 normal + captain + vc */
+      const normals=[d.player1,d.player2,d.player3,d.player4,d.player5,d.player6,d.player7,d.player8,d.player9].filter(Boolean);
       predictState.selectedPlayers=[...normals];
       if(d.captain&&!predictState.selectedPlayers.includes(d.captain))predictState.selectedPlayers.push(d.captain);
       if(d.vc&&!predictState.selectedPlayers.includes(d.vc))predictState.selectedPlayers.push(d.vc);
@@ -2699,6 +2747,10 @@ async function submitPrediction(){
     player3:normalPlayers[2]||'',
     player4:normalPlayers[3]||'',
     player5:normalPlayers[4]||'',
+    player6:normalPlayers[5]||'',
+    player7:normalPlayers[6]||'',
+    player8:normalPlayers[7]||'',
+    player9:normalPlayers[8]||'',
     captain:predictState.captain,
     vc:predictState.vc,
     extraQ:$('pf-extra-q').value,
