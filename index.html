@@ -2510,7 +2510,7 @@ function teamColorScheme(team){
 function renderPredictCVC(){
   const list=$('pf-cvc-list');list.innerHTML='';
   if(predictState.selectedPlayers.length<11){
-    list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 7 players first</div>';
+    list.innerHTML='<div style="color:#bbb;font-size:.82rem;padding:6px 0">Select all 11 players first</div>';
     return;
   }
   const {capPct,vcPct}=computeSelectionPcts();
@@ -2725,7 +2725,7 @@ async function submitPrediction(){
   if(!predictState.winner){statusEl.textContent='⚠️ Please pick a winner';statusEl.style.color='#c62828';return;}
   if(!inn1||!inn2){statusEl.textContent='⚠️ Please enter both innings scores';statusEl.style.color='#c62828';return;}
   if(isTest&&(!inn3||!inn4)){statusEl.textContent='⚠️ Please enter all four innings scores';statusEl.style.color='#c62828';return;}
-  if(predictState.selectedPlayers.length!==7){statusEl.textContent='⚠️ Please select exactly 7 players';statusEl.style.color='#c62828';return;}
+  if(predictState.selectedPlayers.length!==11){statusEl.textContent='⚠️ Please select exactly 11 players';statusEl.style.color='#c62828';return;}
   if(!predictState.captain){statusEl.textContent='⚠️ Please pick a Captain';statusEl.style.color='#c62828';return;}
   if(!predictState.vc){statusEl.textContent='⚠️ Please pick a Vice-Captain';statusEl.style.color='#c62828';return;}
   if($('pf-extra-q').value&&!extra){statusEl.textContent='⚠️ Please complete your Extraordinary Prediction answer';statusEl.style.color='#c62828';return;}
