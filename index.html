@@ -300,6 +300,13 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   pointer-events:none;
 }
 
+.field-section{position:relative;z-index:1;border-radius:12px;padding:12px 10px 2px;margin:0 -2px 14px;}
+.field-section-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.8);margin:0 0 8px 2px;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+.field-section.sec-score{background:linear-gradient(160deg,rgba(21,101,192,.30),rgba(13,71,161,.08));padding-top:16px;}
+.field-section.sec-players{background:linear-gradient(160deg,rgba(46,125,50,.30),rgba(27,94,32,.08));}
+.field-section.sec-cvc{background:linear-gradient(160deg,rgba(240,180,41,.34),rgba(168,118,10,.10));padding-bottom:10px;}
+.field-section.sec-extra{background:linear-gradient(160deg,rgba(142,36,170,.32),rgba(74,20,140,.10));border-radius:12px;}
+
 .field-winner-hero{position:relative;display:flex;flex-direction:column;align-items:center;margin-bottom:18px;z-index:1;}
 .field-winner-eyebrow{font-size:9.5px;letter-spacing:.16em;color:var(--sage);font-weight:600;margin-bottom:3px;text-transform:uppercase;}
 .field-winner-value{font-family:'Teko',sans-serif;font-weight:700;font-size:38px;letter-spacing:.05em;color:var(--gold-soft);text-shadow:0 2px 14px rgba(0,0,0,.55);line-height:1;}
@@ -839,7 +846,7 @@ async function fetchPtsRowsMap(){
   catch(e){ sc=await ensureScData(); narrow=false; }
   const off=narrow?0:2;
   const map={};
-  sc.slice(1,34).forEach(r=>{
+  sc.slice(1,60).forEach(r=>{
     const row=r.slice(off,off+8).map(c=>(c||'').trim());
     if(!row[0]||/^player.?name$/i.test(row[0]))return;
     map[cleanPName(row[0])]={total:row[1],bat:row[2],bowl:row[3],field:row[4],sel:row[5],cap:row[6],vc:row[7]};
@@ -1534,52 +1541,56 @@ function buildPredCard(e,displayRank,isWinner,idx){
       </div>
 
       <div class="field-ground">
-        <div class="field-winner-hero">
-          <span class="field-winner-eyebrow">Winner</span>
-          <span class="field-winner-value">${winnerVal?esc(winnerVal):'—'}</span>
-          <span class="field-pts${zeroCls(winnerPts)} field-winner-pts">${fmt(winnerPts)} PTS</span>
+        <div class="field-section sec-score">
+          <div class="field-winner-hero">
+            <span class="field-winner-eyebrow">Winner</span>
+            <span class="field-winner-value">${winnerVal?esc(winnerVal):'—'}</span>
+            <span class="field-pts${zeroCls(winnerPts)} field-winner-pts">${fmt(winnerPts)} PTS</span>
+          </div>
+
+          <div class="field-row">
+            ${statHtml('1st Innings',inn1Val,inn1Pts)}
+            ${statHtml('2nd Innings',inn2Val,inn2Pts)}
+          </div>
+          ${(inn3Val||inn4Val)?`<div class="field-row">
+            ${statHtml('3rd Innings',inn3Val,inn3Pts)}
+            ${statHtml('4th Innings',inn4Val,inn4Pts)}
+          </div>`:''}
         </div>
 
-        <div class="field-row">
-          ${statHtml('1st Innings',inn1Val,inn1Pts)}
-          ${statHtml('2nd Innings',inn2Val,inn2Pts)}
-        </div>
-        ${(inn3Val||inn4Val)?`<div class="field-row">
-          ${statHtml('3rd Innings',inn3Val,inn3Pts)}
-          ${statHtml('4th Innings',inn4Val,inn4Pts)}
-        </div>`:''}
-
-        <div class="field-divider"></div>
-
-        <div class="field-row">
-          ${playerHtml(players[0].val,players[0].pts)}
-          ${playerHtml(players[1].val,players[1].pts)}
-        </div>
-        <div class="field-row">
-          ${playerHtml(players[2].val,players[2].pts)}
-          ${playerHtml(players[3].val,players[3].pts)}
-        </div>
-        <div class="field-row">
-          ${playerHtml(players[4].val,players[4].pts)}
-          ${playerHtml(players[5].val,players[5].pts)}
-        </div>
-        <div class="field-row">
-          ${playerHtml(players[6].val,players[6].pts)}
-          ${playerHtml(players[7].val,players[7].pts)}
-        </div>
-        <div class="field-row single">
-          ${playerHtml(players[8].val,players[8].pts)}
+        <div class="field-section sec-players">
+          <div class="field-section-lbl">Player Selection</div>
+          <div class="field-row">
+            ${playerHtml(players[0].val,players[0].pts)}
+            ${playerHtml(players[1].val,players[1].pts)}
+          </div>
+          <div class="field-row">
+            ${playerHtml(players[2].val,players[2].pts)}
+            ${playerHtml(players[3].val,players[3].pts)}
+          </div>
+          <div class="field-row">
+            ${playerHtml(players[4].val,players[4].pts)}
+            ${playerHtml(players[5].val,players[5].pts)}
+          </div>
+          <div class="field-row">
+            ${playerHtml(players[6].val,players[6].pts)}
+            ${playerHtml(players[7].val,players[7].pts)}
+          </div>
+          <div class="field-row single">
+            ${playerHtml(players[8].val,players[8].pts)}
+          </div>
         </div>
 
-        <div class="field-divider"></div>
-
-        <div class="field-row">
-          ${playerHtml(capVal,capPts,'Captain · 2×')}
-          ${playerHtml(vcVal,vcPts,'Vice-Captain · 1.5×')}
+        <div class="field-section sec-cvc">
+          <div class="field-section-lbl">Captain &amp; Vice-Captain</div>
+          <div class="field-row">
+            ${playerHtml(capVal,capPts,'Captain · 2×')}
+            ${playerHtml(vcVal,vcPts,'Vice-Captain · 1.5×')}
+          </div>
         </div>
       </div>
 
-      ${extraHtml?`<div class="field-footer">${extraHtml}</div>`:''}
+      ${extraHtml?`<div class="field-section sec-extra field-footer"><div class="field-section-lbl">Extraordinary Prediction</div>${extraHtml}</div>`:''}
     </div>`;
 
   const card=document.createElement('div');
@@ -1899,7 +1910,7 @@ function renderPoints(sc,narrow){
   /* narrow fetch: row = [Name,TotalPts,BatPts,BowlPts,FieldPts,Sel%,Cap%,VC%] starting at 0
      full sheet:   same 8 fields but starting at column index 2 (C) */
   const off=narrow?0:2;
-  const dataRows=sc.slice(1,34).filter(r=>{
+  const dataRows=sc.slice(1,60).filter(r=>{
     const cells=r.slice(off,off+8).map(c=>(c||'').trim());
     if(!cells.some(c=>c))return false;
     if(/^player.?name$/i.test(cells[0]))return false;
