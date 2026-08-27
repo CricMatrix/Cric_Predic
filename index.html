@@ -1164,7 +1164,7 @@ function renderScorecard(pred,sc){
      show Match Info only, skip the live box + empty scorecard tables */
   const scoreIsZero=s=>{
     if(!s||!s.trim())return true;
-    const m=s.trim().match(/^(\d+)/);
+    const m=s.trim().replace(/^\*+\s*/,'').match(/^(\d+)/); /* strip leading "*" (currently-batting marker) before checking digits */
     return !m||parseInt(m[1],10)===0;
   };
   const matchNotStarted=scoreIsZero(i1score)&&scoreIsZero(i2score);
