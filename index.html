@@ -81,6 +81,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   .field-footer{padding:10px 12px 14px;}
   .field-footer-cond{font-size:9.5px;}
   .field-footer-desc{font-size:9.5px;}
+  .rg-card{width:66px;}
+  .rg-photo-wrap{width:50px;height:50px;}
+  .rg-photo-fallback{font-size:14px;}
+  .rg-name-plate{font-size:9.5px;padding:2.5px 6px;}
+  .rg-pts{font-size:9px;}
 }
 .tab{padding:7px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#757575;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;border-radius:4px 4px 0 0;white-space:nowrap;flex-shrink:0;}
 @media(max-width:400px){
@@ -301,6 +306,19 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 }
 
 .field-section{position:relative;z-index:1;border-radius:12px;padding:12px 10px 2px;margin:0 -2px 14px;}
+
+.rg-section{margin-bottom:14px;}
+.rg-section-title{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.85);text-align:center;margin-bottom:10px;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+.rg-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 10px;}
+.rg-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;width:76px;}
+.rg-photo-wrap{position:relative;width:58px;height:58px;border-radius:50%;border:2.5px solid;box-shadow:0 2px 8px rgba(0,0,0,.35);overflow:hidden;background:#10142b;flex-shrink:0;}
+.rg-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:2;border-radius:50%;}
+.rg-photo-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em;z-index:1;}
+.rg-photo-badge{position:absolute;top:-4px;left:-4px;width:19px;height:19px;border-radius:50%;background:#111;color:#fff;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);z-index:3;}
+.rg-photo-badge.vc{background:#1565c0;}
+.rg-name-plate{background:rgba(0,0,0,.6);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.01em;padding:3px 7px;border-radius:6px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.rg-pts{font-family:'Inter',sans-serif;font-size:10px;font-weight:800;color:var(--pts-color);text-shadow:0 1px 4px rgba(0,0,0,.6);}
+.rg-pts.zero{color:var(--pts-red);}
 .field-section-lbl{font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,.8);margin:0 0 8px 2px;text-shadow:0 1px 3px rgba(0,0,0,.6);}
 .field-section.sec-score{background:linear-gradient(160deg,rgba(21,101,192,.30),rgba(13,71,161,.08));padding-top:16px;}
 .field-section.sec-players{background:linear-gradient(160deg,rgba(46,125,50,.30),rgba(27,94,32,.08));}
@@ -1096,6 +1114,7 @@ async function loadPredictionsTab(){
   sh('pred-ld');hd('pred-main');hd('pred-err');
   try{
     const pred=await ensurePredData();
+    try{ await ensureSquadRoleData(); }catch(e){ console.warn('Squad/role data unavailable for Predictions tab:',e.message); }
     renderPredictions(pred.slice(1,21).filter(r=>r.some(c=>c)),pred);
     hd('pred-ld');sh('pred-main');hd('pred-err');
   }catch(e){
@@ -1524,7 +1543,6 @@ function buildPredCard(e,displayRank,isWinner,idx){
   const zeroCls=(pts)=>pts<=0?' zero':'';
   const ptsHtml=(pts)=>`<span class="field-pts${zeroCls(pts)}">${fmt(pts)} PTS</span>`;
   const statHtml=(lbl,val,pts)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span>${ptsHtml(pts)}</div>`;
-  const playerHtml=(val,pts,roleNote)=>`<div class="field-player" ${val?`onclick="openPlayerPopup('${val.replace(/'/g,"\\'")}')"`:''}  style="${val?'cursor:pointer':''}"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}${ptsHtml(pts)}</div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -1568,34 +1586,16 @@ function buildPredCard(e,displayRank,isWinner,idx){
         </div>
 
         <div class="field-section sec-players">
-          <div class="field-section-lbl">Player Selection</div>
-          <div class="field-row">
-            ${playerHtml(players[0].val,players[0].pts)}
-            ${playerHtml(players[1].val,players[1].pts)}
-          </div>
-          <div class="field-row">
-            ${playerHtml(players[2].val,players[2].pts)}
-            ${playerHtml(players[3].val,players[3].pts)}
-          </div>
-          <div class="field-row">
-            ${playerHtml(players[4].val,players[4].pts)}
-            ${playerHtml(players[5].val,players[5].pts)}
-          </div>
-          <div class="field-row">
-            ${playerHtml(players[6].val,players[6].pts)}
-            ${playerHtml(players[7].val,players[7].pts)}
-          </div>
-          <div class="field-row single">
-            ${playerHtml(players[8].val,players[8].pts)}
-          </div>
-        </div>
-
-        <div class="field-section sec-cvc">
-          <div class="field-section-lbl">Captain &amp; Vice-Captain</div>
-          <div class="field-row">
-            ${playerHtml(capVal,capPts,'Captain · 2×')}
-            ${playerHtml(vcVal,vcPts,'Vice-Captain · 1.5×')}
-          </div>
+          ${roleGroupedPlayersHtml([...players.map(p=>p.val),capVal,vcVal],capVal,vcVal,{
+            clickable:true,
+            ptsByPlayer:(()=>{
+              const m={};
+              players.forEach(p=>{ if(p.val) m[p.val]=p.pts; });
+              if(capVal) m[capVal]=capPts;
+              if(vcVal) m[vcVal]=vcPts;
+              return m;
+            })()
+          })}
         </div>
       </div>
 
@@ -2289,7 +2289,7 @@ function populateExtraPredDropdown(){
   renderExtraAnswerInput();
 }
 
-let predictState={teamA:'',teamB:'',squadA:[],squadB:[],roleMap:{},winner:'',selectedPlayers:[],captain:'',vc:''};
+let predictState={teamA:'',teamB:'',squadA:[],squadB:[],roleMap:{},photoMap:{},shortNameMap:{},winner:'',selectedPlayers:[],captain:'',vc:''};
 
 let _predictTimerInterval=null;
 
@@ -2322,26 +2322,14 @@ function parseDeadlineStr(deadlineStr){
 async function loadPredictTab(){
   sh('predict-ld');hd('predict-main');hd('predict-err');
   try{
-    const rows=await fetchSheetByGidDirect(638993616);
-    /* B1=teamA name(rows[0][1]), E1=teamB name(rows[0][4]); B2:B30=squadA, E2:E30=squadB
-       C2:C30=squadA role, F2:F30=squadB role (added alongside the bilateral squads) */
-    /* H1=deadline date/time (rows[0][7]) — enter as "2026-07-10 18:30" */
-    const teamA=(rows[0]||[])[1]||'Team A';
-    const teamB=(rows[0]||[])[4]||'Team B';
-    const squadA=rows.slice(1,30).map(r=>(r[1]||'').trim()).filter(Boolean);
-    const squadB=rows.slice(1,30).map(r=>(r[4]||'').trim()).filter(Boolean);
-    const roleMap={};
-    rows.slice(1,30).forEach(r=>{
-      const nA=(r[1]||'').trim(),rA=(r[2]||'').trim();
-      const nB=(r[4]||'').trim(),rB=(r[5]||'').trim();
-      if(nA)roleMap[nA]=rA;
-      if(nB)roleMap[nB]=rB;
-    });
-    const deadlineStr=(rows[0]||[])[7]||'';
+    const sq=await ensureSquadRoleData();
+    const{teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,deadlineStr}=sq;
 
     predictState.teamA=teamA;predictState.teamB=teamB;
     predictState.squadA=squadA;predictState.squadB=squadB;
     predictState.roleMap=roleMap;
+    predictState.photoMap=photoMap;
+    predictState.shortNameMap=shortNameMap;
     predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';predictState.winner='';
 
     const deadline=parseDeadlineStr(deadlineStr);
@@ -2522,9 +2510,134 @@ const TEAM_COLOR_PALETTE=[
   {bg:'#0a1a33',border:'#1e4d8f',text:'#93c5fd'}, // navy
   {bg:'#1f0a2e',border:'#6b21a8',text:'#d8b4fe'}, // purple
 ];
+function teamColorSchemeByIndex(idx){
+  return TEAM_COLOR_PALETTE[idx%TEAM_COLOR_PALETTE.length];
+}
 function teamColorScheme(team){
   const idx=team===predictState.teamA?0:team===predictState.teamB?1:2;
-  return TEAM_COLOR_PALETTE[idx%TEAM_COLOR_PALETTE.length];
+  return teamColorSchemeByIndex(idx);
+}
+
+/* Squad + role + team names from the Bilateral sheet — cached and
+   side-effect-free (unlike loadPredictTab, this never touches
+   predictState's live form-editing fields), so the Predictions tab can
+   safely use it too, for team-coloring/role-grouping other people's
+   submitted picks, without disturbing whatever the current user has
+   mid-filled on the Predict form. */
+let _squadRoleCache=null;
+async function ensureSquadRoleData(){
+  if(_squadRoleCache)return _squadRoleCache;
+  const rows=await fetchSheetByGidDirect(638993616);
+  const teamA=(rows[0]||[])[1]||'Team A';
+  const teamB=(rows[0]||[])[4]||'Team B';
+  const squadA=rows.slice(1,30).map(r=>(r[1]||'').trim()).filter(Boolean);
+  const squadB=rows.slice(1,30).map(r=>(r[4]||'').trim()).filter(Boolean);
+  const roleMap={};
+  /* Short display names — col A (idx 0) is Team A's short name for the
+     full name in col B; col D (idx 3) is Team B's short name for col E
+     (e.g. "S Gill" for "Shubman Gill"). Keyed by the FULL name, since
+     that's what everything else (squadA/B, roleMap, predictions,
+     captain/vc) is keyed by — this is purely a display-label lookup. */
+  const shortNameMap={};
+  rows.slice(1,30).forEach(r=>{
+    const nA=(r[1]||'').trim(),rA=(r[2]||'').trim(),sA=(r[0]||'').trim();
+    const nB=(r[4]||'').trim(),rB=(r[5]||'').trim(),sB=(r[3]||'').trim();
+    if(nA){roleMap[nA]=rA;if(sA)shortNameMap[nA]=sA;}
+    if(nB){roleMap[nB]=rB;if(sB)shortNameMap[nB]=sB;}
+  });
+  /* Photo URLs — separate flat lookup table, NOT tied to team row
+     position: col I (idx 8) = player full name, col J (idx 9) = photo
+     URL. One shared list for both squads; add rows in any order. Blank/
+     missing/broken URL just falls back to an initials avatar. */
+  const photoMap={};
+  rows.slice(1,100).forEach(r=>{
+    const nm=(r[8]||'').trim(), url=(r[9]||'').trim();
+    if(nm&&url)photoMap[nm]=url;
+  });
+  const deadlineStr=(rows[0]||[])[7]||'';
+  _squadRoleCache={teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,deadlineStr};
+  return _squadRoleCache;
+}
+
+const ROLE_SECTIONS=[
+  {key:'WK',label:'Wicket-Keepers'},
+  {key:'BAT',label:'Batters'},
+  {key:'AR',label:'All-Rounders'},
+  {key:'BOWL',label:'Bowlers'},
+  {key:'OTHER',label:'Others'},
+];
+function roleCategory(roleText){
+  const r=(roleText||'').toLowerCase();
+  if(/wk|wicket.?keep/.test(r))return 'WK';
+  /* Catches "All Rounder"/"AR" as well as the sheet's actual role
+     strings "Bat All", "Bowl All", and bare "All" — the \ball\b word
+     boundary matches standalone "all" without false-matching inside
+     unrelated words (e.g. "Ball"). Checked before bowl/bat so any of
+     these land in AR, not BAT/BOWL. */
+  if(/all.?round|\bar\b|\ball\b/.test(r))return 'AR';
+  if(/bowl/.test(r))return 'BOWL';
+  if(/bat/.test(r))return 'BAT';
+  return 'OTHER';
+}
+/* Renders the full 9+C+VC roster grouped by role as Dream-Team-style
+   circular photo cards: team-colored photo ring (falls back to an
+   initials avatar when no photo URL is set in the Bilateral sheet),
+   C/VC badge pinned on the photo, name plate below, and — only when
+   opts.ptsByPlayer is supplied — a points line under the name. Used by
+   both the pre-submission preview (no points yet, opts.ptsByPlayer
+   omitted) and the submitted-prediction popup (real points passed in). */
+function roleGroupedPlayersHtml(allPlayers,capVal,vcVal,opts){
+  opts=opts||{};
+  const clickable=!!opts.clickable;
+  const ptsByPlayer=opts.ptsByPlayer||null;
+  const sq=_squadRoleCache;
+  const roleMap=sq?sq.roleMap:(predictState.roleMap||{});
+  const squadA=sq?sq.squadA:(predictState.squadA||[]);
+  const photoMap=sq?sq.photoMap:(predictState.photoMap||{});
+  const shortNameMap=sq?sq.shortNameMap:(predictState.shortNameMap||{});
+  const buckets={WK:[],BAT:[],AR:[],BOWL:[],OTHER:[]};
+  allPlayers.forEach(name=>{
+    if(!name)return;
+    buckets[roleCategory(roleMap[name])].push(name);
+  });
+  const initialsOf=name=>name.trim().split(/\s+/).map(w=>w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+  let html='';
+  ROLE_SECTIONS.forEach(({key,label})=>{
+    const names=buckets[key];
+    if(!names.length)return;
+    html+=`<div class="rg-section"><div class="rg-section-title">${esc(label)}</div><div class="rg-row">`;
+    names.forEach(name=>{
+      const isTeamA=squadA.includes(name);
+      const tc=teamColorSchemeByIndex(isTeamA?0:1);
+      const isCap=name===capVal, isVc=name===vcVal;
+      const badge=isCap?'<span class="rg-photo-badge c">C</span>':isVc?'<span class="rg-photo-badge vc">VC</span>':'';
+      const photoUrl=(photoMap[name]||'').trim();
+      /* Display label: short name from Bilateral col A/D when set,
+         falling back to the full name. The FULL name (name) stays the
+         key for everything else — click handler, points lookup, C/VC
+         match — so nothing downstream needs to know about short names. */
+      const displayName=(shortNameMap[name]||name);
+      const nameEsc=esc(displayName), nameJs=name.replace(/'/g,"\\'");
+      const clickAttrs=clickable?` onclick="openPlayerPopup('${nameJs}')" style="cursor:pointer"`:'';
+      let ptsHtml='';
+      if(ptsByPlayer){
+        const pts=n0(ptsByPlayer[name]);
+        ptsHtml=`<div class="rg-pts${pts<=0?' zero':''}">${fmt(pts)} PTS</div>`;
+      }
+      html+=`
+        <div class="rg-card"${clickAttrs}>
+          <div class="rg-photo-wrap" style="border-color:${tc.border}">
+            ${badge}
+            ${photoUrl?`<img class="rg-photo" src="${esc(photoUrl)}" alt="${nameEsc}" loading="lazy" onerror="this.remove()">`:''}
+            <div class="rg-photo-fallback" style="background:${tc.bg};color:${tc.text}">${esc(initialsOf(name))}</div>
+          </div>
+          <div class="rg-name-plate">${nameEsc}</div>
+          ${ptsHtml}
+        </div>`;
+    });
+    html+='</div></div>';
+  });
+  return html;
 }
 
 function renderPredictCVC(){
@@ -2595,7 +2708,6 @@ function openPredictPreview(){
   const eA=($('pf-extra').value||'').trim();
 
   const statHtml=(lbl,val)=>`<div class="field-stat"><span class="field-stat-label">${esc(lbl)}</span><span class="field-stat-value">${val?esc(val):'—'}</span></div>`;
-  const playerHtml=(val,roleNote)=>`<div class="field-player"><span class="field-player-label">${val?esc(val):'—'}</span>${roleNote?`<span class="field-role-note">${esc(roleNote)}</span>`:''}</div>`;
 
   const extraHtml=(eQ||eA)?`
     <div class="field-footer-text">
@@ -2627,30 +2739,8 @@ function openPredictPreview(){
           ${statHtml('3rd Innings',inn3Val)}
           ${statHtml('4th Innings',inn4Val)}
         </div>`:''}
-        <div class="field-divider"></div>
-        <div class="field-row">
-          ${playerHtml(normalPlayers[0])}
-          ${playerHtml(normalPlayers[1])}
-        </div>
-        <div class="field-row">
-          ${playerHtml(normalPlayers[2])}
-          ${playerHtml(normalPlayers[3])}
-        </div>
-        <div class="field-row">
-          ${playerHtml(normalPlayers[4])}
-          ${playerHtml(normalPlayers[5])}
-        </div>
-        <div class="field-row">
-          ${playerHtml(normalPlayers[6])}
-          ${playerHtml(normalPlayers[7])}
-        </div>
-        <div class="field-row single">
-          ${playerHtml(normalPlayers[8])}
-        </div>
-        <div class="field-divider"></div>
-        <div class="field-row">
-          ${playerHtml(capVal,'Captain · 2×')}
-          ${playerHtml(vcVal,'Vice-Captain · 1.5×')}
+        <div class="field-section sec-players">
+          ${roleGroupedPlayersHtml([...normalPlayers,capVal,vcVal],capVal,vcVal,{clickable:false})}
         </div>
       </div>
       ${extraHtml?`<div class="field-footer">${extraHtml}</div>`:''}
