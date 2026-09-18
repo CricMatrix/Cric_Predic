@@ -508,6 +508,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .predict-squad-col{display:flex;flex-direction:column;}
 .predict-team-hdr2{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#c62828;padding:6px 0;border-bottom:2px solid #fdecea;margin-bottom:4px;text-align:center;}
 .predict-player-card{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #f5f5f5;position:relative;}
+.predict-player-photo{width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#f0f0f0;}
+.predict-player-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
 .predict-player-info{flex:1;min-width:0;}
 .predict-player-card .predict-player-nm2{font-size:.74rem;font-weight:600;color:#212121;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .predict-player-role-txt{font-size:.6rem;color:#9e9e9e;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2481,8 +2483,13 @@ function renderPredictSquadList(){
       const role=(predictState.roleMap||{})[player]||''; /* full text straight from column C/F, shown as-is */
       const pct=lookupPct(selPct,player);
       const subLine=[role,pct!==undefined?pct+'% Sel':''].filter(Boolean).join(' · ');
+      /* Photo — same lookup/fallback rule as everywhere else: player's
+         own photo (col I/J) if set, else the shared default (J1), else
+         no image at all (no generic icon). */
+      const photoUrl=((predictState.photoMap||{})[player]||predictState.defaultPhotoUrl||'').trim();
       const card=document.createElement('div');card.className='predict-player-card';
       card.innerHTML=`
+        <div class="predict-player-photo">${photoUrl?`<img src="${esc(photoUrl)}" alt="${esc(player)}" loading="lazy" onerror="this.remove()">`:''}</div>
         <div class="predict-player-info">
           <div class="predict-player-nm2">${esc(player)}</div>
           ${subLine?`<div class="predict-player-role-txt">${esc(subLine)}</div>`:''}
