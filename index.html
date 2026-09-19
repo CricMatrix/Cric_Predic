@@ -89,6 +89,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .tab{padding:7px 14px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#757575;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;border-radius:4px 4px 0 0;white-space:nowrap;flex-shrink:0;}
 @media(max-width:400px){
   .tab{padding:6px 10px;font-size:.66rem;letter-spacing:.8px;}
+  .predict-squad-grid{gap:0 6px;}
+  .predict-player-card{gap:5px;padding:6px 3px;}
+  .predict-player-photo{width:28px;height:36px;}
+  .predict-add-btn2{width:21px;height:21px;font-size:.85rem;}
 }
 .tab:hover{color:#7a0000;background:rgba(26,35,126,.05)}
 .tab.active{color:#7a0000;border-bottom-color:#7a0000;background:rgba(26,35,126,.06)}
@@ -111,7 +115,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .hero-meta-row svg{flex-shrink:0;opacity:.9;color:#f0b429;}
 .hero-result{background:rgba(0,0,0,.2);border-radius:10px;padding:9px 12px;margin-top:12px;font-size:.85rem;font-weight:600;text-align:center;position:relative;z-index:1;}
 .hero-scores{background:linear-gradient(135deg,#7a0000,#c62828 65%,#e0522f);display:flex;align-items:center;padding:6px 18px 22px;gap:10px;position:relative;z-index:1;}
-.hero-team{flex:1;text-align:center;min-width:0;}
+.hero-team{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;}
+.hero-team-text{min-width:0;text-align:center;}
+.hero-flag-wrap{width:26px;height:26px;border-radius:50%;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.15);}
+.hero-flag-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
 .hero-team .nm{font-family:'Oswald',sans-serif;font-size:.72rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hero-team .nm a{color:inherit;text-decoration:none;}
 .hero-team .nm a:hover{text-decoration:underline;}
@@ -477,6 +484,8 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 
 .predict-cvc-row{display:flex;flex-direction:column;}
 .cvc-row2{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 4px;border-bottom:1px solid #f5f5f5;}
+.cvc-row2-photo{width:34px;height:44px;overflow:hidden;flex-shrink:0;}
+.cvc-row2-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
 .cvc-row2-info{min-width:0;flex:1;}
 .cvc-row2-nm{font-size:.78rem;font-weight:600;color:#212121;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cvc-row2-tags{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;}
@@ -505,10 +514,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 
 /* 2-column squad grid: Team A left, Team B right */
 .predict-squad-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
-.predict-squad-col{display:flex;flex-direction:column;}
+.predict-squad-col{display:flex;flex-direction:column;min-width:0;}
 .predict-team-hdr2{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#c62828;padding:6px 0;border-bottom:2px solid #fdecea;margin-bottom:4px;text-align:center;}
 .predict-player-card{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #f5f5f5;position:relative;}
-.predict-player-photo{width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#f0f0f0;}
+.predict-player-photo{width:34px;height:44px;overflow:hidden;flex-shrink:0;}
 .predict-player-photo img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;}
 .predict-player-info{flex:1;min-width:0;}
 .predict-player-card .predict-player-nm2{font-size:.74rem;font-weight:600;color:#212121;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -594,9 +603,15 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
           <div class="hero-result" id="mi-result" style="display:none"></div>
         </div>
         <div class="hero-scores">
-          <div class="hero-team"><div class="nm" id="score-t1-nm">—</div><div class="sc" id="score-t1-sc"></div></div>
+          <div class="hero-team">
+            <div class="hero-flag-wrap" id="score-t1-flag"></div>
+            <div class="hero-team-text"><div class="nm" id="score-t1-nm">—</div><div class="sc" id="score-t1-sc"></div></div>
+          </div>
           <div class="hero-vs">VS</div>
-          <div class="hero-team"><div class="nm" id="score-t2-nm">—</div><div class="sc" id="score-t2-sc"></div></div>
+          <div class="hero-team">
+            <div class="hero-team-text"><div class="nm" id="score-t2-nm">—</div><div class="sc" id="score-t2-sc"></div></div>
+            <div class="hero-flag-wrap" id="score-t2-flag"></div>
+          </div>
         </div>
       </div>
       <div class="live-box" id="live-box" style="display:none">
@@ -868,6 +883,17 @@ async function ensurePtsData(){
   throw new Error('Could not load points data');
 }
 
+/* A real player name is letters/spaces/periods/apostrophes/hyphens only —
+   no digits, no slashes. Filters out stray "live table" content (scores
+   like "94-10", overs like "14.1", run-rate figures, etc.) that can sit
+   inside the same row/column range as the real player table on some
+   sheets, which the row-35 cutoff alone doesn't catch since it's
+   interleaved rather than below it. */
+function looksLikePlayerName(s){
+  const t=(s||'').trim();
+  return t.length>=2&&t.length<=40&&/^[A-Za-z][A-Za-z .'\-]*$/.test(t);
+}
+
 /* Name-keyed lookup of the points sheet's own pre-computed values —
    {total,bat,bowl,field,sel,cap,vc}. Sel/Cap/VC% here are the sheet's own
    formulas, not re-derived client-side from raw Prediction LO submissions
@@ -883,11 +909,11 @@ async function fetchPtsRowsMap(){
   const off=narrow?0:2;
   const map={};
   /* Only rows 2–35 are the real player-points table — beyond row 35 the
-     sheet has other content (a live table etc.) that isn't player data
-     and was getting misread as extra rows here. */
+     sheet has other content (a live table etc.) that isn't player data. */
   sc.slice(1,35).forEach(r=>{
     const row=r.slice(off,off+8).map(c=>(c||'').trim());
     if(!row[0]||/^player.?name$/i.test(row[0]))return;
+    if(!looksLikePlayerName(row[0]))return; /* reject stray non-player rows */
     map[cleanPName(row[0])]={total:row[1],bat:row[2],bowl:row[3],field:row[4],sel:row[5],cap:row[6],vc:row[7]};
   });
   _ptsRowsCache=map;
@@ -1113,6 +1139,7 @@ async function loadScorecardTab(){
   try{
     const pred=await ensurePredData();
     const sc=await ensureScData();
+    try{ await ensureSquadRoleData(); }catch(e){ console.warn('Team logo data unavailable for Scorecard tab:',e.message); }
     renderScorecard(pred,sc);
     hd('sc-ld');sh('sc-main');hd('sc-err');
   }catch(e){
@@ -1185,11 +1212,14 @@ function renderScorecard(pred,sc){
   const i2team =cel(sc,2,89);  /* CH4 */
   const i2score=cel(sc,2,90);  /* CI4 */
 
-  /* Hero scoreboard — team names (linked) + scores */
+  /* Hero scoreboard — team names (linked) + scores + flags */
   $('score-t1-nm').innerHTML=i1team?teamLink(i1team):'Team 1';
   $('score-t1-sc').innerHTML=heroScoreHtml(i1score);
   $('score-t2-nm').innerHTML=i2team?teamLink(i2team):'Team 2';
   $('score-t2-sc').innerHTML=heroScoreHtml(i2score);
+  const flag1=lookupTeamLogo(i1team), flag2=lookupTeamLogo(i2team);
+  $('score-t1-flag').innerHTML=flag1?`<img src="${esc(flag1)}" alt="${esc(i1team)}" loading="lazy" onerror="this.parentElement.innerHTML=''">`:'';
+  $('score-t2-flag').innerHTML=flag2?`<img src="${esc(flag2)}" alt="${esc(i2team)}" loading="lazy" onerror="this.parentElement.innerHTML=''">`:'';
 
   /* Nothing has happened yet (both innings still at 0 or blank) —
      show Match Info only, skip the live box + empty scorecard tables */
@@ -1950,6 +1980,7 @@ function renderPoints(sc,narrow){
     const cells=r.slice(off,off+8).map(c=>(c||'').trim());
     if(!cells.some(c=>c))return false;
     if(/^player.?name$/i.test(cells[0]))return false;
+    if(!looksLikePlayerName(cells[0]))return false; /* reject stray non-player rows */
     return true;
   });
   if(!dataRows.length){
@@ -2582,19 +2613,48 @@ async function ensureSquadRoleData(){
      position: col I (idx 8) = player full name, col J (idx 9) = photo
      URL, starting row 2. One shared list for both squads; add rows in
      any order. J1 (row 1 of the same column) holds one shared DEFAULT
-     photo URL used for any player missing from this list — so no
-     player ever falls back to a plain colored/initials circle as long
-     as J1 is set; a small inline silhouette icon is the last-resort
-     fallback only if J1 itself is blank or its image fails to load. */
+     photo URL used for any player missing from this list. A player with
+     no photo at all (neither their own nor J1) just shows no image —
+     no circle, no icon — matching Dream11's own style. */
   const defaultPhotoUrl=((rows[0]||[])[9]||'').trim();
   const photoMap={};
   rows.slice(1,100).forEach(r=>{
     const nm=(r[8]||'').trim(), url=(r[9]||'').trim();
     if(nm&&url)photoMap[nm]=url;
   });
+  /* Team flags/logos — another flat lookup table: col L (idx 11) = team
+     name, col M (idx 12) = flag/logo URL. Looked up by loose match (exact,
+     then substring either direction) against whatever team label a given
+     screen has on hand (Bilateral's own "India"/"Afghanistan" full names
+     here, but the live Scorecard sheet uses short codes like "IND"/"AFG" —
+     see lookupTeamLogo()), so either form resolves to the same flag. */
+  const teamLogoMap={};
+  rows.slice(1,40).forEach(r=>{
+    const tn=(r[11]||'').trim(), flag=(r[12]||'').trim();
+    if(tn&&flag)teamLogoMap[tn]=flag;
+  });
   const deadlineStr=(rows[0]||[])[7]||'';
-  _squadRoleCache={teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,defaultPhotoUrl,deadlineStr};
+  _squadRoleCache={teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,defaultPhotoUrl,teamLogoMap,deadlineStr};
   return _squadRoleCache;
+}
+
+/* Loose-match a team label (short code like "IND", or full name like
+   "India") against the Bilateral L/M flag table, since different screens
+   refer to the same team differently. Exact match first, then substring
+   either direction (same approach as ActualScoreSync.gs's team matching
+   on the Apps Script side). Returns '' if no flag is set for this team. */
+function lookupTeamLogo(label){
+  const sq=_squadRoleCache;
+  const map=(sq&&sq.teamLogoMap)||{};
+  const clean=(label||'').trim();
+  if(!clean)return'';
+  if(map[clean])return map[clean];
+  const cLower=clean.toLowerCase();
+  const key=Object.keys(map).find(k=>{
+    const kLower=k.toLowerCase();
+    return kLower===cLower||kLower.includes(cLower)||cLower.includes(kLower);
+  });
+  return key?map[key]:'';
 }
 
 /* Team-labeled innings name.
@@ -2724,9 +2784,11 @@ function renderPredictCVC(){
     const cPctN=lookupPct(capPct,player), vPctN=lookupPct(vcPct,player);
     const cPct=cPctN!==undefined?cPctN+'%':undefined;
     const vPct=vPctN!==undefined?vPctN+'%':undefined;
+    const photoUrl=((predictState.photoMap||{})[player]||predictState.defaultPhotoUrl||'').trim();
 
     const row=document.createElement('div');row.className='cvc-row2';
     row.innerHTML=`
+      <div class="cvc-row2-photo">${photoUrl?`<img src="${esc(photoUrl)}" alt="${esc(player)}" loading="lazy" onerror="this.remove()">`:''}</div>
       <div class="cvc-row2-info">
         <div class="cvc-row2-nm">${esc(player)}</div>
         <div class="cvc-row2-tags">
