@@ -514,6 +514,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .predict-role-count-chip.zero b{color:#a8760a;}
 .predict-role-count-chip.capped{background:#fdecea;color:#c62828;}
 .predict-role-count-chip.capped b{color:#c62828;}
+.predict-squad-warning{margin-top:10px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:9px 12px;font-size:.78rem;color:#7a5b00;font-weight:600;}
 
 /* Battery-style segmented progress bar */
 .predict-battery{display:flex;gap:3px;margin-bottom:12px;height:14px;}
@@ -548,14 +549,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .preview-modal-close{position:sticky;top:0;right:0;z-index:10;display:flex;justify-content:flex-end;padding:10px 14px 0;background:transparent;}
 .preview-modal-close button{background:#f5f5f5;border:none;border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555;}
 
-.predict-timer{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:center;}
-.predict-timer-float{position:fixed;right:14px;bottom:calc(58px + env(safe-area-inset-bottom,0px) + 12px);z-index:55;display:flex;align-items:center;gap:6px;background:#212121;color:#fff;border-radius:999px;padding:8px 14px 8px 10px;box-shadow:0 4px 14px rgba(0,0,0,.3);font-family:'Oswald',sans-serif;}
-.predict-timer-float .ptf-clock{font-size:1.05rem;line-height:1;flex-shrink:0;}
-.predict-timer-float .ptf-time{font-size:.92rem;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
-.predict-timer-float.urgent{background:#c62828;animation:timerPulse 1s ease-in-out infinite;}
-.predict-timer-lbl{font-size:.72rem;color:#7a5b00;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
-.predict-timer-val{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#c62828;letter-spacing:.5px;}
-.predict-timer-val.urgent{animation:timerPulse 1s ease-in-out infinite;}
+.hdr-timer{display:flex;align-items:center;gap:5px;background:#fff8e1;border:1px solid #ffe082;border-radius:20px;padding:5px 11px;font-family:'Oswald',sans-serif;font-size:.82rem;font-weight:700;color:#c62828;white-space:nowrap;}
+.hdr-timer .ht-clock{font-size:.92rem;line-height:1;}
+.hdr-timer.urgent{background:#fdecea;border-color:#f5b3ac;animation:timerPulse 1s ease-in-out infinite;}
 @keyframes timerPulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 .predict-closed{text-align:center;padding:50px 20px;}
@@ -586,6 +582,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
           <h1>Cric<span class="brand-accent">matrix</span></h1>
         </div>
       </div>
+      <div id="hdr-timer" class="hdr-timer" style="display:none"></div>
       <div class="hdr-r">
         <button id="install-btn" class="install-btn" style="display:none" onclick="triggerInstall()">📲 Install App</button>
       </div>
@@ -726,7 +723,6 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
     <div id="predict-ld" class="status"><div class="spin"></div><h3>Loading Squads…</h3></div>
     <div id="predict-main" style="display:none">
       <div class="sh"><span class="sh-t">🎯 Make Your Prediction</span></div>
-      <div id="predict-timer-box" style="display:none"></div>
 
       <!-- Step 1: Name -->
       <div class="predict-card">
@@ -778,10 +774,14 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
         <div class="predict-role-counts" id="pf-role-counts"></div>
         <div class="predict-battery" id="pf-battery"></div>
         <div class="predict-squad-grid" id="pf-squad-list"></div>
+        <div id="pf-squad-warning" class="predict-squad-warning" style="display:none"></div>
       </div>
 
-      <!-- Step 5: Captain & Vice-Captain (choose from your 11) -->
-      <div class="predict-card">
+      <!-- Step 5: Captain & Vice-Captain (choose from your 11) — hidden
+           until all 11 are picked with every role's minimum met, so it
+           only appears once it's actually usable, right before the
+           remaining steps toward submission. -->
+      <div class="predict-card" id="pf-cvc-card" style="display:none">
         <div class="predict-picker-hdr">
           <label class="predict-lbl" style="margin:0">Pick Captain &amp; Vice-Captain</label>
         </div>
@@ -2456,9 +2456,7 @@ async function loadPredictTab(){
 }
 
 function startPredictTimer(deadline){
-  const box=$('predict-timer-box');
-  const floatWrap=$('predict-timer-floatwrap');
-  box.style.display='';
+  const hdrTimer=$('hdr-timer');
   if(_predictTimerInterval) clearInterval(_predictTimerInterval);
 
   function tick(){
@@ -2474,15 +2472,13 @@ function startPredictTimer(deadline){
     const s=Math.floor((diff%60000)/1000);
     const urgent=diff<5*60000; /* under 5 min */
     const timeStr=h>0?`${h}h ${m}m ${s}s`:`${m}m ${s}s`;
-    box.innerHTML=`<div class="predict-timer"><div class="predict-timer-lbl">⏳ Submissions close in</div><div class="predict-timer-val${urgent?' urgent':''}">${timeStr}</div></div>`;
-    /* Floating badge — only shown while the Predict tab is the one
-       actually open, so it doesn't follow people onto other tabs. */
-    if(activeTabName()==='predict'){
-      floatWrap.style.display='block';
-      floatWrap.innerHTML=`<div class="predict-timer-float${urgent?' urgent':''}"><span class="ptf-clock">🕐</span><span class="ptf-time">${timeStr}</span></div>`;
-    }else{
-      floatWrap.style.display='none';
-    }
+    /* Header badge — shown on every tab, not just Predict, since the
+       header is sticky/global and the deadline matters regardless of
+       which tab someone's on (this app is only ever tracking one match
+       at a time, so there's no ambiguity about which match it's for). */
+    hdrTimer.style.display='flex';
+    hdrTimer.className='hdr-timer'+(urgent?' urgent':'');
+    hdrTimer.innerHTML=`<span class="ht-clock">🕐</span><span>${timeStr}</span>`;
   }
   tick();
   _predictTimerInterval=setInterval(tick,1000);
@@ -2490,7 +2486,7 @@ function startPredictTimer(deadline){
 
 function showPredictFull(count){
   if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
-  const fw=$('predict-timer-floatwrap');if(fw)fw.style.display='none';
+  const ht=$('hdr-timer');if(ht)ht.style.display='none';
   $('predict-main').innerHTML=`
     <div class="predict-closed">
       <div class="predict-closed-icon">🔒</div>
@@ -2502,7 +2498,7 @@ function showPredictFull(count){
 
 function showPredictClosed(deadline){
   if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
-  const fw=$('predict-timer-floatwrap');if(fw)fw.style.display='none';
+  const ht=$('hdr-timer');if(ht)ht.style.display='none';
   $('predict-main').innerHTML=`
     <div class="predict-closed">
       <div class="predict-closed-icon">⏰</div>
@@ -2594,6 +2590,27 @@ function renderPredictSquadList(){
     seg.className='predict-battery-seg'+(i<predictState.selectedPlayers.length?' filled':'');
     battery.appendChild(seg);
   }
+
+  /* Missing-role warning, right under the table — catches "picked 11 but
+     forgot a Wicket-Keeper (or Batter/All-Rounder/Bowler)" before it's a
+     submit-time surprise. Only shown once all 11 slots are filled (no
+     point warning about a gap while someone's still only 4 picks in);
+     the Captain/VC card stays hidden until this clears too, since C/VC
+     can't be meaningfully chosen from an incomplete or invalid squad. */
+  const roleLabelFull={WK:'Wicket-Keeper',BAT:'Batter',AR:'All-Rounder',BOWL:'Bowler'};
+  const missingRoles=['WK','BAT','AR','BOWL'].filter(k=>roleCounts[k]<ROLE_MIN);
+  const warnEl=$('pf-squad-warning');
+  const cvcCard=$('pf-cvc-card');
+  const squadFull=predictState.selectedPlayers.length===11;
+  if(warnEl){
+    if(squadFull&&missingRoles.length){
+      warnEl.style.display='block';
+      warnEl.textContent=`⚠️ Missing: please select at least 1 ${missingRoles.map(k=>roleLabelFull[k]).join(' and 1 ')}.`;
+    }else{
+      warnEl.style.display='none';
+    }
+  }
+  if(cvcCard)cvcCard.style.display=(squadFull&&!missingRoles.length)?'':'none';
 }
 
 function togglePlayerSelect(player){
@@ -3294,12 +3311,6 @@ setInterval(()=>{refreshActiveTab();},15*60*1000);
 </div>
 
 <!-- Bottom navigation -->
-<!-- Floating deadline countdown — stays visible on the Predict tab
-     regardless of scroll position, so it's not just at the top of the
-     form (people were missing it once they'd scrolled down to the last
-     question / submit button). Shown/hidden per-tick in startPredictTimer. -->
-<div id="predict-timer-floatwrap" style="display:none"></div>
-
 <div class="bottom-nav">
   <div class="bn-item" id="bn-btn-pred" onclick="switchTab('pred')">
     <span class="bn-icon">📋</span><span class="bn-lbl">Predictions</span>
