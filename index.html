@@ -506,6 +506,14 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .predict-team-counts{display:flex;gap:8px;margin-bottom:8px;}
 .predict-team-count-chip{flex:1;text-align:center;background:#f5f5f5;border-radius:8px;padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:#555;}
 .predict-team-count-chip b{color:#c62828;font-size:.92rem;}
+.predict-team-count-chip.capped{background:#fdecea;color:#c62828;}
+.predict-role-counts{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;}
+.predict-role-count-chip{flex:1;min-width:60px;text-align:center;background:#f5f5f5;border-radius:8px;padding:5px 6px;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;color:#555;}
+.predict-role-count-chip b{color:#2e7d32;font-size:.85rem;}
+.predict-role-count-chip.zero{background:#fff8e1;color:#a8760a;}
+.predict-role-count-chip.zero b{color:#a8760a;}
+.predict-role-count-chip.capped{background:#fdecea;color:#c62828;}
+.predict-role-count-chip.capped b{color:#c62828;}
 
 /* Battery-style segmented progress bar */
 .predict-battery{display:flex;gap:3px;margin-bottom:12px;height:14px;}
@@ -541,6 +549,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .preview-modal-close button{background:#f5f5f5;border:none;border-radius:50%;width:30px;height:30px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#555;}
 
 .predict-timer{background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:12px 14px;margin-bottom:12px;text-align:center;}
+.predict-timer-float{position:fixed;right:14px;bottom:calc(58px + env(safe-area-inset-bottom,0px) + 12px);z-index:55;display:flex;align-items:center;gap:6px;background:#212121;color:#fff;border-radius:999px;padding:8px 14px 8px 10px;box-shadow:0 4px 14px rgba(0,0,0,.3);font-family:'Oswald',sans-serif;}
+.predict-timer-float .ptf-clock{font-size:1.05rem;line-height:1;flex-shrink:0;}
+.predict-timer-float .ptf-time{font-size:.92rem;font-weight:700;letter-spacing:.3px;white-space:nowrap;}
+.predict-timer-float.urgent{background:#c62828;animation:timerPulse 1s ease-in-out infinite;}
 .predict-timer-lbl{font-size:.72rem;color:#7a5b00;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
 .predict-timer-val{font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#c62828;letter-spacing:.5px;}
 .predict-timer-val.urgent{animation:timerPulse 1s ease-in-out infinite;}
@@ -759,15 +771,16 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <!-- Step 4: Player picker -->
       <div class="predict-card">
         <div class="predict-picker-hdr">
-          <label class="predict-lbl" style="margin:0">Pick 7 Players</label>
+          <label class="predict-lbl" style="margin:0">Pick 11 Players</label>
           <span class="predict-count" id="pf-player-count">0/11 selected</span>
         </div>
         <div class="predict-team-counts" id="pf-team-counts"></div>
+        <div class="predict-role-counts" id="pf-role-counts"></div>
         <div class="predict-battery" id="pf-battery"></div>
         <div class="predict-squad-grid" id="pf-squad-list"></div>
       </div>
 
-      <!-- Step 5: Captain & Vice-Captain (choose from your 7) -->
+      <!-- Step 5: Captain & Vice-Captain (choose from your 11) -->
       <div class="predict-card">
         <div class="predict-picker-hdr">
           <label class="predict-lbl" style="margin:0">Pick Captain &amp; Vice-Captain</label>
@@ -2347,7 +2360,7 @@ function populateExtraPredDropdown(){
   renderExtraAnswerInput();
 }
 
-let predictState={teamA:'',teamB:'',squadA:[],squadB:[],roleMap:{},photoMap:{},shortNameMap:{},defaultPhotoUrl:'',winner:'',selectedPlayers:[],captain:'',vc:''};
+let predictState={teamA:'',teamB:'',squadA:[],squadB:[],roleMap:{},photoMap:{},shortNameMap:{},defaultPhotoUrl:'',teamCapMax:10,winner:'',selectedPlayers:[],captain:'',vc:''};
 
 let _predictTimerInterval=null;
 
@@ -2381,7 +2394,7 @@ async function loadPredictTab(){
   sh('predict-ld');hd('predict-main');hd('predict-err');
   try{
     const sq=await ensureSquadRoleData();
-    const{teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,defaultPhotoUrl,deadlineStr}=sq;
+    const{teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,defaultPhotoUrl,teamCapMax,deadlineStr}=sq;
 
     predictState.teamA=teamA;predictState.teamB=teamB;
     predictState.squadA=squadA;predictState.squadB=squadB;
@@ -2389,6 +2402,7 @@ async function loadPredictTab(){
     predictState.photoMap=photoMap;
     predictState.shortNameMap=shortNameMap;
     predictState.defaultPhotoUrl=defaultPhotoUrl;
+    predictState.teamCapMax=teamCapMax;
     predictState.selectedPlayers=[];predictState.captain='';predictState.vc='';predictState.winner='';
 
     const deadline=parseDeadlineStr(deadlineStr);
@@ -2443,6 +2457,7 @@ async function loadPredictTab(){
 
 function startPredictTimer(deadline){
   const box=$('predict-timer-box');
+  const floatWrap=$('predict-timer-floatwrap');
   box.style.display='';
   if(_predictTimerInterval) clearInterval(_predictTimerInterval);
 
@@ -2460,6 +2475,14 @@ function startPredictTimer(deadline){
     const urgent=diff<5*60000; /* under 5 min */
     const timeStr=h>0?`${h}h ${m}m ${s}s`:`${m}m ${s}s`;
     box.innerHTML=`<div class="predict-timer"><div class="predict-timer-lbl">⏳ Submissions close in</div><div class="predict-timer-val${urgent?' urgent':''}">${timeStr}</div></div>`;
+    /* Floating badge — only shown while the Predict tab is the one
+       actually open, so it doesn't follow people onto other tabs. */
+    if(activeTabName()==='predict'){
+      floatWrap.style.display='block';
+      floatWrap.innerHTML=`<div class="predict-timer-float${urgent?' urgent':''}"><span class="ptf-clock">🕐</span><span class="ptf-time">${timeStr}</span></div>`;
+    }else{
+      floatWrap.style.display='none';
+    }
   }
   tick();
   _predictTimerInterval=setInterval(tick,1000);
@@ -2467,6 +2490,7 @@ function startPredictTimer(deadline){
 
 function showPredictFull(count){
   if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
+  const fw=$('predict-timer-floatwrap');if(fw)fw.style.display='none';
   $('predict-main').innerHTML=`
     <div class="predict-closed">
       <div class="predict-closed-icon">🔒</div>
@@ -2478,6 +2502,7 @@ function showPredictFull(count){
 
 function showPredictClosed(deadline){
   if(_predictTimerInterval){clearInterval(_predictTimerInterval);_predictTimerInterval=null;}
+  const fw=$('predict-timer-floatwrap');if(fw)fw.style.display='none';
   $('predict-main').innerHTML=`
     <div class="predict-closed">
       <div class="predict-closed-icon">⏰</div>
@@ -2502,22 +2527,33 @@ function renderPredictSquadList(){
   const list=$('pf-squad-list');list.innerHTML='';
   const maxReached=predictState.selectedPlayers.length>=11;
   const {selPct}=computeSelectionPcts();
+  const capMax=predictState.teamCapMax||10;
+  const {a:teamACount,b:teamBCount}=teamCountsOf(predictState.selectedPlayers);
+  const roleCounts=roleCountsOf(predictState.selectedPlayers);
 
   const colA=document.createElement('div');colA.className='predict-squad-col';
   const colB=document.createElement('div');colB.className='predict-squad-col';
 
-  [[predictState.teamA,predictState.squadA,colA],[predictState.teamB,predictState.squadB,colB]].forEach(([teamName,squad,col])=>{
+  [[predictState.teamA,predictState.squadA,colA,teamACount],[predictState.teamB,predictState.squadB,colB,teamBCount]].forEach(([teamName,squad,col,teamCount])=>{
     const hdr=document.createElement('div');hdr.className='predict-team-hdr2';hdr.textContent=teamName;
     col.appendChild(hdr);
     squad.forEach(player=>{
       const isSelected=predictState.selectedPlayers.includes(player);
       const role=(predictState.roleMap||{})[player]||''; /* full text straight from column C/F, shown as-is */
+      const roleCat=roleCategory(role);
       const pct=lookupPct(selPct,player);
       const subLine=[role,pct!==undefined?pct+'% Sel':''].filter(Boolean).join(' · ');
       /* Photo — same lookup/fallback rule as everywhere else: player's
          own photo (col I/J) if set, else the shared default (J1), else
          no image at all (no generic icon). */
       const photoUrl=((predictState.photoMap||{})[player]||predictState.defaultPhotoUrl||'').trim();
+      /* Disabled if the 11-player total is full, OR this player's own
+         team is already at the per-team cap, OR this player's role is
+         already at its 8-player cap — checked per row so only the
+         players actually blocked grey out, not the whole list. */
+      const teamCapped=teamCount>=capMax;
+      const roleCapped=roleCat!=='OTHER'&&roleCounts[roleCat]>=ROLE_MAX;
+      const disabled=!isSelected&&(maxReached||teamCapped||roleCapped);
       const card=document.createElement('div');card.className='predict-player-card';
       card.innerHTML=`
         <div class="predict-player-photo">${photoUrl?`<img src="${esc(photoUrl)}" alt="${esc(player)}" loading="lazy" onerror="this.remove()">`:''}</div>
@@ -2525,7 +2561,7 @@ function renderPredictSquadList(){
           <div class="predict-player-nm2">${esc(player)}</div>
           ${subLine?`<div class="predict-player-role-txt">${esc(subLine)}</div>`:''}
         </div>
-        <button class="predict-add-btn2${isSelected?' selected':''}" ${!isSelected&&maxReached?'disabled':''}>${isSelected?'−':'+'}</button>`;
+        <button class="predict-add-btn2${isSelected?' selected':''}" ${disabled?'disabled':''}>${isSelected?'−':'+'}</button>`;
       card.querySelector('button').onclick=()=>togglePlayerSelect(player);
       col.appendChild(card);
     });
@@ -2534,12 +2570,22 @@ function renderPredictSquadList(){
 
   $('pf-player-count').textContent=predictState.selectedPlayers.length+'/11 selected';
 
-  /* Team-wise counts */
-  const countA=predictState.selectedPlayers.filter(p=>predictState.squadA.includes(p)).length;
-  const countB=predictState.selectedPlayers.filter(p=>predictState.squadB.includes(p)).length;
+  /* Team-wise counts — flagged red once a side hits the per-team cap */
   $('pf-team-counts').innerHTML=`
-    <div class="predict-team-count-chip">${esc(predictState.teamA)}: <b>${countA}</b></div>
-    <div class="predict-team-count-chip">${esc(predictState.teamB)}: <b>${countB}</b></div>`;
+    <div class="predict-team-count-chip${teamACount>=capMax?' capped':''}">${esc(predictState.teamA)}: <b>${teamACount}</b>/${capMax}</div>
+    <div class="predict-team-count-chip${teamBCount>=capMax?' capped':''}">${esc(predictState.teamB)}: <b>${teamBCount}</b>/${capMax}</div>`;
+
+  /* Role-wise counts — each of WK/BAT/AR/BOWL needs 1–8; flagged amber
+     while still at 0 (only actually a problem once all 11 are picked —
+     shown live as a heads-up, not an error, since it's expected to be 0
+     early on). */
+  const roleCountsEl=$('pf-role-counts');
+  if(roleCountsEl){
+    roleCountsEl.innerHTML=ROLE_SECTIONS.filter(rs=>rs.key!=='OTHER').map(rs=>{
+      const c=roleCounts[rs.key];
+      return `<div class="predict-role-count-chip${c===0?' zero':''}${c>=ROLE_MAX?' capped':''}">${esc(rs.key)}: <b>${c}</b>/${ROLE_MAX}</div>`;
+    }).join('');
+  }
 
   /* Battery-style progress bar (7 segments) */
   const battery=$('pf-battery');battery.innerHTML='';
@@ -2559,6 +2605,12 @@ function togglePlayerSelect(player){
     if(predictState.vc===player)predictState.vc='';
   }else{
     if(predictState.selectedPlayers.length>=11)return;
+    const isTeamA=predictState.squadA.includes(player);
+    const {a,b}=teamCountsOf(predictState.selectedPlayers);
+    const capMax=predictState.teamCapMax||10;
+    if((isTeamA?a:b)>=capMax)return; /* would exceed the per-team cap */
+    const role=roleCategory((predictState.roleMap||{})[player]);
+    if(role!=='OTHER'&&roleCountsOf(predictState.selectedPlayers)[role]>=ROLE_MAX)return; /* would exceed the per-role cap */
     predictState.selectedPlayers.push(player);
   }
   renderPredictSquadList();
@@ -2634,7 +2686,15 @@ async function ensureSquadRoleData(){
     if(tn&&flag)teamLogoMap[tn]=flag;
   });
   const deadlineStr=(rows[0]||[])[7]||'';
-  _squadRoleCache={teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,defaultPhotoUrl,teamLogoMap,deadlineStr};
+  /* Max players allowed from one side — normally 10 (leaves at least 1
+     required from the opponent out of 11 total), but some promotional/
+     classic formats cap it at 7 instead. Rather than hardcoding that
+     exception, N1 lets you set it per match: leave blank for the normal
+     10-player cap, or put 7 (or any other number) in N1 to override it
+     for a specific match. */
+  const teamCapMaxRaw=parseInt((rows[0]||[])[13],10);
+  const teamCapMax=(Number.isFinite(teamCapMaxRaw)&&teamCapMaxRaw>0)?teamCapMaxRaw:10;
+  _squadRoleCache={teamA,teamB,squadA,squadB,roleMap,photoMap,shortNameMap,defaultPhotoUrl,teamLogoMap,teamCapMax,deadlineStr};
   return _squadRoleCache;
 }
 
@@ -2693,6 +2753,27 @@ function roleCategory(roleText){
   if(/bowl/.test(r))return 'BOWL';
   if(/bat/.test(r))return 'BAT';
   return 'OTHER';
+}
+
+/* Squad-composition rules for the 11-player prediction:
+   - Up to predictState.teamCapMax (default 10, sheet-overridable via
+     Bilateral N1) from one side — since the total is fixed at 11, capping
+     one side at 10 automatically guarantees at least 1 from the other,
+     so that requirement doesn't need a separate check.
+   - Each of WK/BAT/AR/BOWL: 1–8 players. "OTHER" (a player whose role
+     text didn't match any known keyword) isn't subject to this cap —
+     there shouldn't normally be any, but an incomplete role cell
+     shouldn't be able to silently block submission. */
+const ROLE_MIN=1, ROLE_MAX=8;
+function teamCountsOf(selected){
+  const a=selected.filter(p=>predictState.squadA.includes(p)).length;
+  const b=selected.filter(p=>predictState.squadB.includes(p)).length;
+  return{a,b};
+}
+function roleCountsOf(selected){
+  const counts={WK:0,BAT:0,AR:0,BOWL:0,OTHER:0};
+  selected.forEach(p=>{ counts[roleCategory((predictState.roleMap||{})[p])]++; });
+  return counts;
 }
 /* Renders the full 9+C+VC roster grouped by role as Dream-Team-style
    circular photo cards: team-colored photo ring (falls back to the
@@ -2963,6 +3044,21 @@ async function submitPrediction(){
   if(!inn1||!inn2){statusEl.textContent='⚠️ Please enter both innings scores';statusEl.style.color='#c62828';return;}
   if(isTest&&(!inn3||!inn4)){statusEl.textContent='⚠️ Please enter all four innings scores';statusEl.style.color='#c62828';return;}
   if(predictState.selectedPlayers.length!==11){statusEl.textContent='⚠️ Please select exactly 11 players';statusEl.style.color='#c62828';return;}
+  {
+    /* Defensive re-check of the same team-cap/role-cap rules the picker
+       already enforces live — guards against an edited/loaded prediction
+       reaching here in a state the UI wouldn't have allowed to be built. */
+    const capMax=predictState.teamCapMax||10;
+    const {a,b}=teamCountsOf(predictState.selectedPlayers);
+    if(a>capMax){statusEl.textContent=`⚠️ Max ${capMax} players allowed from ${predictState.teamA}`;statusEl.style.color='#c62828';return;}
+    if(b>capMax){statusEl.textContent=`⚠️ Max ${capMax} players allowed from ${predictState.teamB}`;statusEl.style.color='#c62828';return;}
+    const rc=roleCountsOf(predictState.selectedPlayers);
+    const roleLabel={WK:'Wicket-Keeper',BAT:'Batter',AR:'All-Rounder',BOWL:'Bowler'};
+    for(const key of['WK','BAT','AR','BOWL']){
+      if(rc[key]<ROLE_MIN){statusEl.textContent=`⚠️ Please select at least ${ROLE_MIN} ${roleLabel[key]}`;statusEl.style.color='#c62828';return;}
+      if(rc[key]>ROLE_MAX){statusEl.textContent=`⚠️ Max ${ROLE_MAX} ${roleLabel[key]}s allowed`;statusEl.style.color='#c62828';return;}
+    }
+  }
   if(!predictState.captain){statusEl.textContent='⚠️ Please pick a Captain';statusEl.style.color='#c62828';return;}
   if(!predictState.vc){statusEl.textContent='⚠️ Please pick a Vice-Captain';statusEl.style.color='#c62828';return;}
   if($('pf-extra-q').value&&!extra){statusEl.textContent='⚠️ Please complete your Extraordinary Prediction answer';statusEl.style.color='#c62828';return;}
@@ -3198,6 +3294,12 @@ setInterval(()=>{refreshActiveTab();},15*60*1000);
 </div>
 
 <!-- Bottom navigation -->
+<!-- Floating deadline countdown — stays visible on the Predict tab
+     regardless of scroll position, so it's not just at the top of the
+     form (people were missing it once they'd scrolled down to the last
+     question / submit button). Shown/hidden per-tick in startPredictTimer. -->
+<div id="predict-timer-floatwrap" style="display:none"></div>
+
 <div class="bottom-nav">
   <div class="bn-item" id="bn-btn-pred" onclick="switchTab('pred')">
     <span class="bn-icon">📋</span><span class="bn-lbl">Predictions</span>
