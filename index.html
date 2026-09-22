@@ -104,6 +104,13 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .status h3{font-family:'Oswald',sans-serif;font-size:1.15rem;color:#212121;margin-bottom:8px}
 .status p{font-size:.88rem;line-height:1.6}
 .sh{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #e0e0e0}
+.pred-list-shot-btn{
+  margin-left:auto;align-self:center;background:#f5f5f5;border:none;border-radius:16px;
+  padding:6px 12px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;
+  letter-spacing:.02em;color:#333;cursor:pointer;
+}
+.pred-list-shot-btn:disabled{opacity:.55;cursor:default;}
+.pred-list-shot-brand{display:none;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:.02em;color:#111;padding:4px 2px 14px;}
 .sh-t{font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:#7a0000}
 .sh-b{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:#757575;background:#f0f0f0;padding:2px 10px;border-radius:20px}
 /* ── HERO SCOREBOARD CARD (Match Center style) ── */
@@ -708,8 +715,14 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   <div class="tab-panel" id="tab-pred">
     <div id="pred-ld" class="status"><div class="spin"></div><h3>Loading Predictions…</h3></div>
     <div id="pred-main" style="display:none">
-      <div class="sh"><span class="sh-t">Predictions</span><span class="sh-b" id="pred-cnt"></span></div>
-      <div class="pred-list" id="pred-list"></div>
+      <div class="sh">
+        <span class="sh-t">Predictions</span><span class="sh-b" id="pred-cnt"></span>
+        <button id="predListShotBtn" class="pred-list-shot-btn" onclick="downloadPredictionsListScreenshot()">📸 Save</button>
+      </div>
+      <div id="pred-list-shot-target">
+        <div class="pred-list-shot-brand">🏏 <b>Cric<span style="color:#c62828">matrix</span></b></div>
+        <div class="pred-list" id="pred-list"></div>
+      </div>
       <a href="rules.html" target="_blank" style="display:block;text-align:center;margin-top:16px;padding:12px;background:#fff;border:1px solid #e0e0e0;border-radius:10px;color:#c62828;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.85rem;text-decoration:none;letter-spacing:.5px;">📊 View Full Scoring Rules →</a>
     </div>
     <div id="pred-err" class="status" style="display:none"><h3>⚠️ Could not load</h3><p>Check sheet permissions and refresh.</p></div>
@@ -1793,6 +1806,56 @@ async function downloadPredictionScreenshot(){
   }
 }
 
+
+/* ── Save the Predictions LIST (the ranked overview, not a single
+   player's card) as an image — same capture/share pattern as
+   downloadPredictionScreenshot above. The branding strip is hidden on
+   the live page (redundant right under the real header) and only shown
+   for the duration of the capture, since this image won't carry the
+   page's own sticky header along with it. */
+async function downloadPredictionsListScreenshot(){
+  const content=$('pred-list-shot-target');
+  const brand=content?content.querySelector('.pred-list-shot-brand'):null;
+  const btn=$('predListShotBtn');
+  if(!content||!content.querySelector('.pred-list')||!content.querySelector('.pred-list').innerHTML.trim())return;
+  if(typeof html2canvas==='undefined'){
+    alert('Screenshot library failed to load — check your connection and try again.');
+    return;
+  }
+  const origLabel=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='⏳ …';}
+  if(brand)brand.style.display='block';
+  try{
+    const canvas=await html2canvas(content,{
+      useCORS:true,
+      backgroundColor:'#f5f5f5',
+      scale:2,
+    });
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+    if(!blob)throw new Error('Could not generate image');
+
+    const dateStr=new Date().toISOString().slice(0,10);
+    const filename=`cricmatrix-predictions-${dateStr}.png`;
+    const file=new File([blob],filename,{type:'image/png'});
+
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Cricmatrix Predictions'});
+    }else{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+    }
+  }catch(err){
+    if(err&&err.name==='AbortError')return; /* user cancelled the share sheet — not an error */
+    console.error('Screenshot failed:',err);
+    alert('Could not create the screenshot. Try again, or check the console for details.');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=origLabel;}
+    if(brand)brand.style.display='none';
+  }
+}
 
 /* ── Player detail popup ── */
 let _ptsDataCache=[];
