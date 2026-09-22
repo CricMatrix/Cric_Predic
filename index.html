@@ -209,7 +209,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .pred-modal-close{
   position:sticky;top:0;right:0;z-index:10;
-  display:flex;justify-content:flex-end;padding:10px 14px 0;
+  display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:10px 14px 0;
   background:transparent;
 }
 .pred-modal-close button{
@@ -217,6 +217,12 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
   color:#555;
 }
+.pred-modal-shot-btn{
+  width:auto!important;border-radius:16px!important;padding:0 12px;
+  font-family:'Barlow Condensed',sans-serif;font-size:.78rem!important;font-weight:700;
+  letter-spacing:.02em;color:#333!important;gap:4px;
+}
+.pred-modal-shot-btn:disabled{opacity:.55;cursor:default;}
 
 /* ── Player detail popup (inside modal) ── */
 .player-popup-overlay{display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;}
@@ -816,6 +822,7 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 const SHEET_ID='1FrLu-ket-ZUIE5UPr8BkVuuvRMWtoJ3O283RIsosarg';
 const BASE=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
@@ -1734,6 +1741,58 @@ function closePredModal(){
   $('predModal').classList.remove('open');
   document.body.style.overflow='';
 }
+
+/* ── Save the open prediction card as an image ──
+   Captures #predModalContent (the same pitch-card view someone would
+   otherwise screenshot manually) with html2canvas, then either opens the
+   native share sheet (so it can go straight to WhatsApp/a group — Web
+   Share API with files, where supported) or falls back to a plain
+   download. scale:2 for a crisp image; useCORS so player photos/flags
+   from external hosts (Wikimedia etc.) still render instead of leaving
+   blank gaps — html2canvas fetches those itself under the hood, no
+   changes needed to how the <img> tags elsewhere are written. */
+async function downloadPredictionScreenshot(){
+  const content=$('predModalContent');
+  const btn=$('predModalShotBtn');
+  if(!content||!content.innerHTML.trim())return;
+  if(typeof html2canvas==='undefined'){
+    alert('Screenshot library failed to load — check your connection and try again.');
+    return;
+  }
+  const origLabel=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='⏳ …';}
+  try{
+    const canvas=await html2canvas(content,{
+      useCORS:true,
+      backgroundColor:'#0a1128', /* matches the pitch card's own dark background */
+      scale:2,
+    });
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+    if(!blob)throw new Error('Could not generate image');
+
+    const nameEl=content.querySelector('.field-player-name');
+    const safeName=(nameEl?nameEl.textContent:'prediction').trim().replace(/[^a-z0-9]+/gi,'-').toLowerCase();
+    const filename=`cricmatrix-${safeName||'prediction'}.png`;
+    const file=new File([blob],filename,{type:'image/png'});
+
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Cricmatrix Prediction'});
+    }else{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+    }
+  }catch(err){
+    if(err&&err.name==='AbortError')return; /* user cancelled the share sheet — not an error */
+    console.error('Screenshot failed:',err);
+    alert('Could not create the screenshot. If any player photos are from a host that blocks cross-origin access, that can prevent capture — try again, or check the console for details.');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=origLabel;}
+  }
+}
+
 
 /* ── Player detail popup ── */
 let _ptsDataCache=[];
@@ -3337,7 +3396,10 @@ setInterval(()=>{refreshActiveTab();},15*60*1000);
 <div class="pred-modal-overlay" id="predModal">
   <div class="pred-modal-backdrop" onclick="closePredModal()"></div>
   <div class="pred-modal-sheet" id="predModalSheet">
-    <div class="pred-modal-close"><button onclick="closePredModal()">✕</button></div>
+    <div class="pred-modal-close">
+      <button id="predModalShotBtn" class="pred-modal-shot-btn" onclick="downloadPredictionScreenshot()">📸 Save</button>
+      <button onclick="closePredModal()">✕</button>
+    </div>
     <div id="predModalContent"></div>
   </div>
 </div>
