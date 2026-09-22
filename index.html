@@ -1522,46 +1522,47 @@ function renderMatchInfo(sc){
    cell, though in practice it's normally all in AD36 with the rest blank.
    Shown only when this actually has content — otherwise hidden entirely,
    never an empty box. */
-function renderAIPrediction(sc){
-  const section=$('ai-pred-section');
-  const box=$('ai-pred-box');
-  if(!section||!box)return;
+function renderAIPrediction(sc) {
+  const section = $('ai-pred-section');
+  const box = $('ai-pred-box');
+  if (!section || !box) return;
 
-  /* Scan rows 36–43 (not just row 36 alone) and cols AC–AN (idx 28–39, a
-     bit wider than AD:AM) for the first row with substantial content. A big
-     merged cell's actual top-left anchor is easy to be off by a row or
-     two from wherever the text visually looks centered, so this is
-     deliberately more forgiving than reading row 36 alone. Takes the
-     first row with >15 chars of combined text — short enough to still
-     rule out stray one-word content elsewhere in that band. */
-  let raw='';
-  /* Starts at row 36, not row 33 — row 35 (AD35/AE35) has unrelated short
-     content on this sheet that was getting picked up first. */
-  for(let r=35;r<=42;r++){
-    const row=sc[r]||[];
-    const candidate=row.slice(28,40).map(c=>(c||'').toString()).join('').trim();
-    if(candidate.length>15){raw=candidate;break;}
+  // 1. Direct fetch from AD36 (Row 36 = index 35, Col AD = index 29)
+  const cellVal = sc && sc[35] && sc[35][29];
+  const raw = (cellVal || '').toString().trim();
+
+  if (!raw) {
+    section.style.display = 'none';
+    box.innerHTML = '';
+    return;
   }
-  if(!raw){section.style.display='none';box.innerHTML='';return;}
 
-  /* \< is a markdown-style escape for a literal "<" (so "\<= 120" isn't
-     mistaken for the start of an HTML tag by anything upstream) — unescape
-     it BEFORE html-escaping, so it ends up as a plain "<" on the page
-     rather than a stray backslash. */
-  const unescaped=raw.replace(/\\</g,'<');
-  const safe=esc(unescaped);
-  const html=safe
-    .split(/-{3,}/)                              /* "-----" = section divider */
-    .map(block=>block
-      .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')      /* **bold** → <b> (no literal ** shown) */
-      .replace(/\n/g,'<br>')                      /* real newlines within a section */
-      .trim())
-    .filter(Boolean)
-    .join('<hr>');
+  // 2. Safely replace "\<" with "<" without breaking the JavaScript parser
+  const unescaped = raw.replaceAll('\\<', '<');
+  const safe = esc(unescaped);
 
-  if(!html){section.style.display='none';box.innerHTML='';return;}
-  box.innerHTML=html;
-  section.style.display='';
+  // 3. Format section dividers (---), bold tags (**text**), and line breaks (\n)
+  const html = safe
+    .split(/-{3,}/)
+    .map(block => 
+      block
+        .replace(/\*\*(.+?)\*\*/g, '**$1**')
+        .replace(/\n/g, '')
+.trim()
+)
+.filter(Boolean)
+.join('
+
+');
+
+if (!html) {
+section.style.display = 'none';
+box.innerHTML = '';
+return;
+}
+
+box.innerHTML = html;
+section.style.display = '';
 }
 
 function buildLive(data){
