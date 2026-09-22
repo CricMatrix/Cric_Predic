@@ -1527,20 +1527,22 @@ function renderAIPrediction(sc){
   const box=$('ai-pred-box');
   if(!section||!box)return;
 
-  // Row 36 is 0-indexed as sc[35]
-  const row = sc[35] || [];
-  
-  // AD to AN corresponds to indices 29 through 39 (AD is column 30, index 29)
-  const raw = row.slice(29, 40).map(c => (c || '').toString()).join('').trim();
-
-  if(!raw){
-    section.style.display='none';
-    box.innerHTML='';
-    return;
+  /* Scan rows 36–43 (not just row 36 alone) and cols AC–AN (idx 28–39, a
+     bit wider than AD:AM) for the first row with substantial content. A big
+     merged cell's actual top-left anchor is easy to be off by a row or
+     two from wherever the text visually looks centered, so this is
+     deliberately more forgiving than reading row 36 alone. Takes the
+     first row with >15 chars of combined text — short enough to still
+     rule out stray one-word content elsewhere in that band. */
+  let raw='';
+  /* Starts at row 36, not row 33 — row 35 (AD35/AE35) has unrelated short
+     content on this sheet that was getting picked up first. */
+  for(let r=35;r<=42;r++){
+    const row=sc[r]||[];
+    const candidate=row.slice(28,40).map(c=>(c||'').toString()).join('').trim();
+    if(candidate.length>15){raw=candidate;break;}
   }
-
-  // Render logic...
-}
+  if(!raw){section.style.display='none';box.innerHTML='';return;}
 
   /* \< is a markdown-style escape for a literal "<" (so "\<= 120" isn't
      mistaken for the start of an HTML tag by anything upstream) — unescape
