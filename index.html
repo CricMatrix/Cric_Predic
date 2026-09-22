@@ -169,6 +169,9 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 .mi-card.wide{grid-column:1/-1;}
 .mi-card-lbl{font-family:'Oswald',sans-serif;font-size:.64rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#8a8580;white-space:nowrap;}
 .mi-card-val{font-family:'Inter',sans-serif;font-size:.78rem;font-weight:600;color:#212121;text-align:left;line-height:1.35;word-break:break-word;}
+.ai-pred-box{background:#fff;border:1px solid #ece8e2;border-radius:14px;padding:14px 16px;margin-top:4px;font-family:'Inter',sans-serif;font-size:.82rem;line-height:1.7;color:#333;}
+.ai-pred-box b{color:#7a0000;font-weight:700;}
+.ai-pred-box hr{border:none;border-top:1px dashed #ece8e2;margin:10px 0;}
 .live-box{background:#fff;border:1px solid #f0d9d9;border-radius:14px;overflow:hidden;margin:0 0 14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .live-title{background:#fdecea;border-bottom:1px solid #f0d9d9;padding:6px 14px;font-family:'Oswald',sans-serif;font-size:.64rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7a0000;display:flex;align-items:center;gap:6px;}
 .live-dot{width:6px;height:6px;border-radius:50%;background:#c62828;animation:pulse 1.2s ease-in-out infinite;flex-shrink:0}
@@ -682,6 +685,12 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       <div class="match-info-section" id="match-info-section" style="display:none">
         <div class="sh" style="margin-top:14px"><span class="sh-t">Match Info</span></div>
         <div class="match-info-grid" id="match-info-grid"></div>
+      </div>
+      <!-- AI Match Prediction — from the sheet's own AI formula in
+           AD36:AM36, only shown when that range actually has content -->
+      <div class="ai-pred-section" id="ai-pred-section" style="display:none">
+        <div class="sh" style="margin-top:14px"><span class="sh-t">🤖 AI Match Prediction</span></div>
+        <div class="ai-pred-box" id="ai-pred-box"></div>
       </div>
     </div>
     <div id="sc-err" class="status" style="display:none">
@@ -1247,6 +1256,7 @@ function renderScorecard(pred,sc){
     hd('live-box');
     hd('sc-full-block');
     renderMatchInfo(sc);
+    renderAIPrediction(sc);
     hd('sc-ld');sh('sc-main');hd('sc-err');
     return;
   }
@@ -1305,6 +1315,7 @@ function renderScorecard(pred,sc){
   buildBowlTable('inn2-bowl',rng(sc,1,11,60,66));
   buildLive(rng(sc,35,41,2,7));
   renderMatchInfo(sc);
+  renderAIPrediction(sc);
 
   /* 3rd/4th innings tables only apply to Test matches (visibility of their
      tabs is already handled above by innLabels/visibleCount) */
@@ -1499,6 +1510,44 @@ function renderMatchInfo(sc){
     card.innerHTML=`<div class="mi-card-lbl">${esc(lbl)}</div><div class="mi-card-val">${esc(val)}</div>`;
     grid.appendChild(card);
   });
+  section.style.display='';
+}
+
+/* ════════════════════════════════════════════
+   AI MATCH PREDICTION — Scorecard K1
+   K=col10, row1=sc[0]. The sheet's own AI formula writes the report as a
+   single clean text value here (no markdown markers). Line breaks (\n) and
+   "-----" section-divider tokens, if present, are still rendered nicely.
+   Shown only when this actually has content — otherwise hidden entirely,
+   never an empty box. */
+function renderAIPrediction(sc){
+  const section=$('ai-pred-section');
+  const box=$('ai-pred-box');
+  if(!section||!box)return;
+
+  /* AI report now lives in a single cell — K1 (col K = idx 10, row 1 =
+     sc[0]) — moved here for easy, unambiguous detection instead of
+     scanning across multiple rows/columns for it. */
+  const raw=((sc[0]||[])[10]||'').toString().trim();
+  if(!raw){section.style.display='none';box.innerHTML='';return;}
+
+  /* \< is a markdown-style escape for a literal "<" (so "\<= 120" isn't
+     mistaken for the start of an HTML tag by anything upstream) — unescape
+     it BEFORE html-escaping, so it ends up as a plain "<" on the page
+     rather than a stray backslash. Kept even though the text is now plain
+     (no ** markers) in case that escape style is still used for <= etc. */
+  const unescaped=raw.replace(/\\</g,'<');
+  const safe=esc(unescaped);
+  const html=safe
+    .split(/-{3,}/)                              /* "-----" = section divider, if used */
+    .map(block=>block
+      .replace(/\n/g,'<br>')                      /* line breaks within a section */
+      .trim())
+    .filter(Boolean)
+    .join('<hr>');
+
+  if(!html){section.style.display='none';box.innerHTML='';return;}
+  box.innerHTML=html;
   section.style.display='';
 }
 
