@@ -1527,17 +1527,15 @@ function renderAIPrediction(sc){
   const box=$('ai-pred-box');
   if(!section||!box)return;
 
-  /* Scan rows 36–43 (not just row 36 alone) and cols AC–AN (idx 28–39, a
-     bit wider than AD:AM) for the first row with substantial content. A big
+  /* Scan rows 33–40 (not just row 36) and cols AC–AN (idx 28–39, a bit
+     wider than AD:AM) for the first row with substantial content. A big
      merged cell's actual top-left anchor is easy to be off by a row or
      two from wherever the text visually looks centered, so this is
      deliberately more forgiving than reading row 36 alone. Takes the
      first row with >15 chars of combined text — short enough to still
      rule out stray one-word content elsewhere in that band. */
   let raw='';
-  /* Starts at row 36, not row 33 — row 35 (AD35/AE35) has unrelated short
-     content on this sheet that was getting picked up first. */
-  for(let r=35;r<=42;r++){
+  for(let r=33;r<=40;r++){
     const row=sc[r]||[];
     const candidate=row.slice(28,40).map(c=>(c||'').toString()).join('').trim();
     if(candidate.length>15){raw=candidate;break;}
