@@ -1830,6 +1830,16 @@ async function downloadPredictionsListScreenshot(){
       useCORS:true,
       backgroundColor:'#f5f5f5',
       scale:2,
+      /* html2canvas photographs a hidden COPY of the page, and in that copy the
+         cards' fade-in animation (fu: opacity 0 → 1, staggered per card) starts
+         over — so the capture caught them mid-fade (the 2nd one faded) or not yet
+         visible at all (the rest missing). Pin everything to its finished state. */
+      onclone:(doc)=>{
+        const st=doc.createElement('style');
+        st.textContent='#pred-list-shot-target *{animation:none!important;transition:none!important;}'+
+                       '#pred-list-shot-target .pred-card{opacity:1!important;transform:none!important;}';
+        doc.head.appendChild(st);
+      },
     });
     const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
     if(!blob)throw new Error('Could not generate image');
