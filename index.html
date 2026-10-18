@@ -2205,6 +2205,11 @@ function renderPoints(sc,narrow){
    Row 0 = headers: Name, Total, Matches Played, Average Points, [Match1], [Match2]...
    Rows 1+ = data
 ════════════════════════════════════════════ */
+/* The AI's prediction (written by GeminiPrediction.gs under AI_ENTRY_NAME)
+   belongs on the Predictions page only — never on the leaderboard, even if
+   the leaderboard sheet happens to pull names from Prediction LO. Lower-case;
+   must match AI_ENTRY_NAME in GeminiPrediction.gs. */
+const LB_HIDDEN_NAMES=['ai'];
 function renderLeaderboard(rows){
   const list=$('lb-list');list.innerHTML='';
   if(!rows.length){
@@ -2225,7 +2230,7 @@ function renderLeaderboard(rows){
 
   const dataRows=rows.slice(1)
     .map(r=>r.slice(0,lastCol+1).map(c=>(c||'').trim()))
-    .filter(r=>r[0]);
+    .filter(r=>r[0]&&!LB_HIDDEN_NAMES.includes(r[0].trim().toLowerCase()));
 
   /* Qualification: must have played >=75% of the max matches played by
      anyone OTHER than Subbu — Subbu's own match count doesn't set the
