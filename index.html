@@ -2209,7 +2209,7 @@ function renderPoints(sc,narrow){
    belongs on the Predictions page only — never on the leaderboard, even if
    the leaderboard sheet happens to pull names from Prediction LO. Lower-case;
    must match AI_ENTRY_NAME in GeminiPrediction.gs. */
-const LB_HIDDEN_NAMES=['ai'];
+const LB_HIDDEN_NAMES=['gemini'];
 function renderLeaderboard(rows){
   const list=$('lb-list');list.innerHTML='';
   if(!rows.length){
