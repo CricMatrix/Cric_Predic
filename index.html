@@ -110,6 +110,48 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
   letter-spacing:.02em;color:#333;cursor:pointer;
 }
 .pred-list-shot-btn:disabled{opacity:.55;cursor:default;}
+.past-btn{display:block;width:100%;text-align:center;margin-top:12px;padding:12px;background:#fff;border:1px solid #e0e0e0;border-radius:10px;color:#c62828;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.85rem;letter-spacing:.5px;cursor:pointer;}
+.past-overlay{display:none;position:fixed;inset:0;z-index:700;background:#f5f5f5;flex-direction:column;}
+.past-overlay.open{display:flex;}
+.past-hdr{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:#fff;border-bottom:1px solid #ece8e2;}
+.past-hdr button{background:#f5f5f5;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;color:#555;flex-shrink:0;}
+.past-title{flex:1;min-width:0;font-family:'Oswald',sans-serif;font-weight:700;font-size:1.02rem;letter-spacing:.04em;text-transform:uppercase;color:#7a0000;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.past-body{flex:1;overflow-y:auto;padding:14px 14px calc(28px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch;}
+.past-status{text-align:center;padding:60px 20px;color:#757575;font-size:.9rem;line-height:1.5;}
+.past-ai{background:#fff;border:1px solid #ece8e2;border-radius:10px;padding:9px 12px;margin-bottom:12px;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.92rem;letter-spacing:.02em;color:#333;}
+.past-card{background:#fff;border:1px solid #ece8e2;border-radius:14px;padding:13px 15px;margin-bottom:10px;cursor:pointer;}
+.past-card:active{background:#fafafa;}
+.past-card-t{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#212121;text-transform:uppercase;letter-spacing:.4px;}
+.past-meta{font-size:.74rem;color:#8a8a8a;margin-top:2px;}
+.past-result{font-size:.84rem;font-weight:700;color:#2e7d32;margin-top:7px;}
+.past-scores{font-size:.74rem;color:#666;margin-top:2px;}
+.past-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:9px;padding-top:8px;border-top:1px solid #f1eeea;font-size:.8rem;color:#444;}
+.past-top b{color:#8e1616;text-transform:uppercase;}
+.past-d-head{background:#fff;border:1px solid #ece8e2;border-radius:14px;padding:14px 15px;}
+.past-section-t{font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;font-size:.74rem;color:#9e9e9e;margin:16px 2px 7px;font-weight:700;}
+.past-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.past-chip{background:#fff;border:1px solid #ece8e2;border-radius:8px;padding:5px 9px;font-size:.76rem;color:#333;}
+.past-chip b{color:#8e1616;}
+.past-row{background:#fff;border:1px solid #ece8e2;border-radius:12px;margin-bottom:8px;overflow:hidden;}
+.past-row-h{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;}
+.past-rank{width:22px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;color:#9e9e9e;}
+.past-name{flex:1;min-width:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.4px;color:#212121;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.past-pts{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.15rem;color:#8e1616;}
+.past-pts small{font-family:'Inter',sans-serif;font-size:.6rem;font-weight:500;color:#aaa;margin-left:3px;}
+.past-chev{color:#bbb;font-size:.8rem;transition:transform .2s;}
+.past-row.open .past-chev{transform:rotate(180deg);}
+.past-row-b{display:none;padding:2px 14px 12px;border-top:1px solid #f5f2ee;font-size:.8rem;}
+.past-row.open .past-row-b{display:block;}
+.past-kv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:5px 0;border-bottom:1px dashed #f0ece6;}
+.past-kv>span:first-child{color:#777;}
+.past-kv .past-pn{color:#222;}
+.past-p{font-weight:700;margin-left:6px;}
+.past-p.pos{color:#2e7d32;}.past-p.neg{color:#c62828;}.past-p.zero{color:#b0b0b0;}
+.past-sub{font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase;font-size:.7rem;color:#9e9e9e;font-weight:700;margin:10px 0 2px;}
+.past-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+.past-extra{margin-top:8px;padding:8px 10px;background:#fafafa;border-radius:8px;}
+.past-extra-q{color:#777;font-size:.74rem;margin-bottom:3px;}
+.pred-ai-line{background:#fff;border:1px solid #ece8e2;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:600;letter-spacing:.02em;color:#333;}
 .pred-list-shot-brand{display:none;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:.02em;color:#111;padding:4px 2px 14px;}
 .sh-t{font-family:'Oswald',sans-serif;font-size:1.05rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:#7a0000}
 .sh-b{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:#757575;background:#f0f0f0;padding:2px 10px;border-radius:20px}
@@ -721,8 +763,10 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
       </div>
       <div id="pred-list-shot-target">
         <div class="pred-list-shot-brand">🏏 <b>Cric<span style="color:#c62828">matrix</span></b></div>
+        <div class="pred-ai-line" id="pred-ai-line" style="display:none"></div>
         <div class="pred-list" id="pred-list"></div>
       </div>
+      <button class="past-btn" onclick="openPastMatches()">📅 Past Matches</button>
       <a href="rules.html" target="_blank" style="display:block;text-align:center;margin-top:16px;padding:12px;background:#fff;border:1px solid #e0e0e0;border-radius:10px;color:#c62828;font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.85rem;text-decoration:none;letter-spacing:.5px;">📊 View Full Scoring Rules →</a>
     </div>
     <div id="pred-err" class="status" style="display:none"><h3>⚠️ Could not load</h3><p>Check sheet permissions and refresh.</p></div>
@@ -839,6 +883,11 @@ body{font-family:'Barlow',sans-serif;background:#f5f5f5;color:#212121;min-height
 <script>
 const SHEET_ID='1FrLu-ket-ZUIE5UPr8BkVuuvRMWtoJ3O283RIsosarg';
 const BASE=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+/* The AI's entry in Prediction LO (AI_ENTRY_NAME in GeminiPrediction.gs). Lower-case.
+   Used to mark its card on the Predictions page and to keep it off the leaderboard.
+   Several names are fine: ['ai','gemini']. */
+const AI_NAMES=['ai'];
+const isAiName=n=>AI_NAMES.includes(String(n||'').trim().toLowerCase());
 
 /* ── Sportskeeda slug ── */
 function toSlug(name){
@@ -1627,6 +1676,17 @@ let allPredEntries=[];
 let predWinnerCount=0;
 let predActiveFilter='all';
 
+/* "🤖 AI is 2nd of 5 · 305 pts · beat 3 of 4 players" — only once someone has points,
+   and only when the AI actually has an entry alongside at least one other player. */
+function aiStandingText(entries){
+  const idx=entries.findIndex(e=>isAiName(e.name));
+  if(idx<0||entries.length<2||!entries.some(e=>e.totalPts>0))return '';
+  const ai=entries[idx], pos=idx+1;                     // same position the list shows
+  const suffix=(pos%100>=11&&pos%100<=13)?'th':({1:'st',2:'nd',3:'rd'}[pos%10]||'th');
+  const beat=entries.filter(e=>!isAiName(e.name)&&e.totalPts<ai.totalPts).length;
+  return `🤖 AI is ${pos}${suffix} of ${entries.length} · ${fmt(ai.totalPts)} pts · beat ${beat} of ${entries.length-1} players`;
+}
+
 function renderPredictions(predRows,all){
   const entries=predRows.map((pred,ri)=>{
     const ptsRow=all[ri+1+22]||[];
@@ -1647,6 +1707,8 @@ function renderPredictions(predRows,all){
     list.appendChild(card);
   });
   $('pred-cnt').textContent=entries.length+' players';
+  const aiLine=$('pred-ai-line');
+  if(aiLine){const t=aiStandingText(entries);aiLine.textContent=t;aiLine.style.display=t?'':'none';}
   hd('pred-ld');sh('pred-main');hd('pred-err');
 }
 
@@ -1732,7 +1794,7 @@ function buildPredCard(e,displayRank,isWinner,idx){
     <div class="pred-summary">
       <div class="pred-rank">${displayRank}</div>
       <div class="pred-nm-wrap" style="cursor:pointer" onclick="openPredModal(this)">
-        <div class="pred-nm">${esc(name)}</div>
+        <div class="pred-nm">${isAiName(name)?'🤖 ':''}${esc(name)}</div>
         <div class="pred-ts-sm">${fmtDate(pred[0])}</div>
       </div>
       <div><div class="pred-tot">${fmt(totalPts)}</div><div class="pred-tot-lbl">pts</div></div>
@@ -2219,7 +2281,7 @@ function renderPoints(sc,narrow){
    belongs on the Predictions page only — never on the leaderboard, even if
    the leaderboard sheet happens to pull names from Prediction LO. Lower-case;
    must match AI_ENTRY_NAME in GeminiPrediction.gs. */
-const LB_HIDDEN_NAMES=['gemini'];
+const LB_HIDDEN_NAMES=AI_NAMES;
 function renderLeaderboard(rows){
   const list=$('lb-list');list.innerHTML='';
   if(!rows.length){
@@ -3435,6 +3497,147 @@ if(isRunningStandalone()){
   if(btn)btn.style.display='none';
 }
 
+/* ═══════════ PAST MATCHES ═══════════
+   Reads the "History" and "History Players" sheets that MatchArchive.gs writes.
+   Columns are found by HEADER NAME (not position), and a sheet is only accepted
+   if its header matches — Google silently returns the FIRST sheet when you ask
+   for one that doesn't exist yet, and that must never be mistaken for history. */
+let _past=null,_pastView=[],_pastListScroll=0;
+const pastOrd=n=>{const m=n%100;return (m>=11&&m<=13)?n+'th':n+({1:'st',2:'nd',3:'rd'}[n%10]||'th');};
+const pastPts=v=>{const n=n0(v);const c=n>0?'pos':n<0?'neg':'zero';return `<span class="past-p ${c}">${n>0?'+':''}${fmt(n)}</span>`;};
+
+async function fetchStrictSheet(name){
+  const r=await fetchTO(`${BASE}&sheet=${encodeURIComponent(name)}`,25000);
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const t=await r.text();
+  if(t.startsWith('<!'))throw new Error('sheet not accessible');
+  return parseCSV(t);
+}
+
+function parsePastHistory(rows){
+  if(!rows||!rows.length)return null;
+  const hdr=rows[0].map(c=>(c||'').trim());
+  if(hdr[0]!=='Match Key'||hdr.indexOf('Total Pts')<0||hdr.indexOf('Archived At')<0)return null;   // not our History sheet
+  const ix=n=>hdr.indexOf(n);
+  const g=(r,n)=>{const i=ix(n);return i<0?'':(r[i]||'').trim();};
+  const byKey=new Map();
+  rows.slice(1).forEach(r=>{
+    const key=g(r,'Match Key');if(!key)return;
+    if(!byKey.has(key))byKey.set(key,{key,format:g(r,'Format'),match:g(r,'Match'),teams:g(r,'Teams'),teamA:g(r,'Team A'),teamB:g(r,'Team B'),
+      when:g(r,'Date & Time'),venue:g(r,'Venue'),toss:g(r,'Toss'),result:g(r,'Result'),finalScores:g(r,'Final Scores'),entries:[]});
+    const pk=(n,p)=>({name:g(r,n),pts:n0(g(r,p))});
+    byKey.get(key).entries.push({
+      rank:parseInt(g(r,'Rank'),10)||0,name:g(r,'Name'),total:n0(g(r,'Total Pts')),
+      winner:{pick:g(r,'Winner Pick'),pts:n0(g(r,'Winner Pts'))},
+      inn:[1,2,3,4].map(i=>({pick:g(r,'Inn '+i+' Pick'),pts:n0(g(r,'Inn '+i+' Pts'))})),
+      players:[1,2,3,4,5,6,7,8,9].map(i=>pk('Player '+i,'Player '+i+' Pts')),
+      captain:pk('Captain','Captain Pts'),vc:pk('Vice Captain','VC Pts'),
+      extra:{q:g(r,'Extra Q'),a:g(r,'Extra A'),pts:n0(g(r,'Extra Pts'))}
+    });
+  });
+  const list=[...byKey.values()];
+  list.forEach(m=>m.entries.sort((a,b)=>(a.rank||999)-(b.rank||999)||b.total-a.total));
+  return list;                                          // sheet order = oldest first
+}
+function parsePastPlayers(rows){
+  const out={};
+  if(!rows||!rows.length)return out;
+  const hdr=rows[0].map(c=>(c||'').trim());
+  const iP=hdr.indexOf('Player'),iT=hdr.indexOf('Points');
+  if(hdr[0]!=='Match Key'||iP<0||iT<0)return out;
+  rows.slice(1).forEach(r=>{const k=(r[0]||'').trim(),n=(r[iP]||'').trim();if(k&&n)(out[k]=out[k]||[]).push({name:n,pts:n0(r[iT])});});
+  Object.values(out).forEach(a=>a.sort((x,y)=>y.pts-x.pts));
+  return out;
+}
+
+async function openPastMatches(){
+  $('pastOverlay').classList.add('open');document.body.style.overflow='hidden';
+  pastSetHeader('Past Matches',false);
+  $('past-body').innerHTML='<div class="past-status"><div class="spin"></div>Loading past matches…</div>';
+  try{
+    const [hist,pl]=await Promise.all([fetchStrictSheet('History'),fetchStrictSheet('History Players').catch(()=>null)]);
+    const matches=parsePastHistory(hist)||[];
+    _past={matches,players:parsePastPlayers(pl)};
+    renderPastList();
+  }catch(e){
+    console.error('Past matches:',e);
+    $('past-body').innerHTML='<div class="past-status">Could not load past matches.<br><span style="font-size:.8rem">'+esc(e.message)+'</span><br><br><button class="rbtn" onclick="openPastMatches()">Retry</button></div>';
+  }
+}
+function closePastMatches(){$('pastOverlay').classList.remove('open');document.body.style.overflow='';}
+function pastSetHeader(title,showBack){$('past-title').textContent=title;$('past-back').style.visibility=showBack?'visible':'hidden';}
+function pastBack(){renderPastList();$('past-body').scrollTop=_pastListScroll;}
+
+function renderPastList(){
+  const body=$('past-body'),ms=_past.matches;
+  pastSetHeader('Past Matches',false);
+  if(!ms.length){
+    body.innerHTML='<div class="past-status">No past matches yet.<br><span style="font-size:.8rem">They appear here once a match has been archived.</span></div>';
+    return;
+  }
+  _pastView=[...ms].reverse();                          // newest first
+  const ranks=ms.map(m=>{const i=m.entries.findIndex(e=>isAiName(e.name));return(i>=0&&m.entries.length>1)?i+1:0;}).filter(Boolean);
+  const aiLine=ranks.length?`<div class="past-ai">🤖 AI over ${ranks.length} match${ranks.length>1?'es':''}: 1st in ${ranks.filter(r=>r===1).length} · average finish ${(ranks.reduce((a,b)=>a+b,0)/ranks.length).toFixed(1)}</div>`:'';
+  body.innerHTML=aiLine+_pastView.map((m,i)=>{
+    const top=m.entries[0]||{name:'—',total:0};
+    const first=(m.match||'').split(',')[0].trim();
+    const meta=[first,m.when].filter(Boolean).join(' · ');
+    const ai=m.entries.findIndex(e=>isAiName(e.name));
+    return `<div class="past-card" onclick="openPastMatch(${i})">
+      <div class="past-card-t">${esc(m.teams||m.match||'Match')}</div>
+      ${meta?`<div class="past-meta">${esc(meta)}</div>`:''}
+      ${m.result?`<div class="past-result">🏆 ${esc(m.result)}</div>`:''}
+      ${m.finalScores?`<div class="past-scores">${esc(m.finalScores)}</div>`:''}
+      <div class="past-top"><span>👑 <b>${esc(top.name)}</b> · ${fmt(top.total)} pts</span>
+        <span>${m.entries.length} players${ai>=0&&m.entries.length>1?' · 🤖 '+pastOrd(ai+1):''}</span></div>
+    </div>`;}).join('');
+}
+
+function pastPickBody(m,e){
+  const kv=(l,v,p)=>`<div class="past-kv"><span>${l}</span><span>${v}${p===undefined?'':pastPts(p)}</span></div>`;
+  let h=kv('Winner',esc(e.winner.pick||'—'),e.winner.pts);
+  if(/test/i.test(m.format)){
+    e.inn.forEach((x,i)=>{if(x.pick)h+=kv('Innings '+(i+1),esc(x.pick),x.pts);});
+  }else{
+    if(e.inn[0].pick)h+=kv(esc(m.teamA||'Team A')+' score',esc(e.inn[0].pick),e.inn[0].pts);
+    if(e.inn[1].pick)h+=kv(esc(m.teamB||'Team B')+' score',esc(e.inn[1].pick),e.inn[1].pts);
+  }
+  h+=kv('Captain',esc(e.captain.name||'—'),e.captain.pts);
+  h+=kv('Vice-Captain',esc(e.vc.name||'—'),e.vc.pts);
+  const pl=e.players.filter(p=>p.name);
+  if(pl.length)h+='<div class="past-sub">Players</div><div class="past-grid">'+pl.map(p=>`<div class="past-kv"><span class="past-pn">${esc(p.name)}</span>${pastPts(p.pts)}</div>`).join('')+'</div>';
+  if(e.extra.q)h+=`<div class="past-extra"><div class="past-extra-q">${esc(e.extra.q)}</div><div>Answer: <b>${esc(e.extra.a||'—')}</b>${pastPts(e.extra.pts)}</div></div>`;
+  return h;
+}
+
+function openPastMatch(i){
+  const m=_pastView[i];if(!m)return;
+  const body=$('past-body');_pastListScroll=body.scrollTop;
+  pastSetHeader(m.teams||'Match',true);
+  const first=(m.match||'').split(',')[0].trim();
+  const top=(_past.players[m.key]||[]).slice(0,5);
+  body.innerHTML=`<div class="past-d-head">
+      <div class="past-card-t" style="font-size:1.2rem">${esc(m.teams||m.match||'Match')}</div>
+      ${[first,m.when].filter(Boolean).length?`<div class="past-meta">${esc([first,m.when].filter(Boolean).join(' · '))}</div>`:''}
+      ${m.venue?`<div class="past-meta">${esc(m.venue)}</div>`:''}
+      ${m.toss?`<div class="past-meta">Toss: ${esc(m.toss)}</div>`:''}
+      ${m.result?`<div class="past-result">🏆 ${esc(m.result)}</div>`:''}
+      ${m.finalScores?`<div class="past-scores">${esc(m.finalScores)}</div>`:''}
+    </div>
+    ${top.length?`<div class="past-section-t">Top players</div><div class="past-chips">${top.map(p=>`<div class="past-chip">${esc(p.name)} <b>${fmt(p.pts)}</b></div>`).join('')}</div>`:''}
+    <div class="past-section-t">Predictions</div>
+    ${m.entries.map((e,k)=>`<div class="past-row">
+      <div class="past-row-h" onclick="this.parentElement.classList.toggle('open')">
+        <div class="past-rank">${e.rank||k+1}</div>
+        <div class="past-name">${isAiName(e.name)?'🤖 ':''}${esc(e.name)}</div>
+        <div class="past-pts">${fmt(e.total)}<small>PTS</small></div>
+        <div class="past-chev">▼</div>
+      </div>
+      <div class="past-row-b">${pastPickBody(m,e)}</div>
+    </div>`).join('')}`;
+  body.scrollTop=0;
+}
+
 /* ── Splash screen ── shown for a minimum of ~2.5s, but held longer if
    the initial Scorecard data is still loading past that point. */
 const SPLASH_MIN_MS=2500;
@@ -3469,6 +3672,16 @@ if(_savedTab==='sc'){
 }
 setInterval(()=>{refreshActiveTab();},15*60*1000);
 </script>
+
+<!-- Past matches (read from the History sheet written by MatchArchive.gs) -->
+<div class="past-overlay" id="pastOverlay">
+  <div class="past-hdr">
+    <button id="past-back" onclick="pastBack()" style="visibility:hidden" aria-label="Back">←</button>
+    <div class="past-title" id="past-title">Past Matches</div>
+    <button onclick="closePastMatches()" aria-label="Close">✕</button>
+  </div>
+  <div class="past-body" id="past-body"></div>
+</div>
 
 <!-- Prediction field modal -->
 <div class="pred-modal-overlay" id="predModal">
